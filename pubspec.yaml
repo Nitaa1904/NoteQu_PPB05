@@ -64,6 +64,7 @@ flutter:
     - assets/bubblesbg.png
     - assets/bubblesbg.svg
     - assets/images/Empty.png
+    - assets/images/profile.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
