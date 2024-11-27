@@ -3,7 +3,14 @@ import 'package:notequ/design_system/styles/color.dart';
 import 'package:notequ/design_system/widget/card/task_card.dart';
 import 'package:notequ/pages/tugasku/detail_tugas.dart';
 
-class Kategori extends StatelessWidget {
+class Kategori extends StatefulWidget {
+  const Kategori({super.key});
+
+  @override
+  _KategoriState createState() => _KategoriState();
+}
+
+class _KategoriState extends State<Kategori> {
   final List<String> categories = [
     'Semua',
     'Tugas Kuliah',
@@ -14,7 +21,7 @@ class Kategori extends StatelessWidget {
     'Olahraga',
   ];
 
-  final List<Map<String, String>> tasks = [
+  final List<Map<String, String>> allTasks = [
     {
       'category': 'Tugas Kuliah',
       'title': 'Tugas Logika Matematika',
@@ -41,7 +48,16 @@ class Kategori extends StatelessWidget {
     },
   ];
 
-  Kategori({super.key});
+  String selectedCategory = 'Semua';
+
+  List<Map<String, String>> get filteredTasks {
+    if (selectedCategory == 'Semua') {
+      return allTasks;
+    }
+    return allTasks
+        .where((task) => task['category'] == selectedCategory)
+        .toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -71,13 +87,23 @@ class Kategori extends StatelessWidget {
                 itemBuilder: (context, index) {
                   return Padding(
                     padding: const EdgeInsets.only(right: 12.0),
-                    child: Chip(
+                    child: ChoiceChip(
                       label: Text(
                         categories[index],
-                        style:
-                            const TextStyle(color: ColorCollection.primary100),
+                        style: TextStyle(
+                          color: selectedCategory == categories[index]
+                              ? ColorCollection.primary100
+                              : ColorCollection.primary900,
+                        ),
                       ),
-                      backgroundColor: ColorCollection.primary900,
+                      selected: selectedCategory == categories[index],
+                      onSelected: (isSelected) {
+                        setState(() {
+                          selectedCategory = categories[index];
+                        });
+                      },
+                      backgroundColor: ColorCollection.primary100,
+                      selectedColor: ColorCollection.primary900,
                     ),
                   );
                 },
@@ -86,16 +112,16 @@ class Kategori extends StatelessWidget {
             const SizedBox(height: 16),
             Expanded(
               child: ListView.builder(
-                itemCount: tasks.length,
+                itemCount: filteredTasks.length,
                 itemBuilder: (context, index) {
                   return TugasCard(
-                    task: tasks[index],
+                    task: filteredTasks[index],
                     onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => DetailTugas(
-                            task: tasks[index],
+                            task: filteredTasks[index],
                           ),
                         ),
                       );
