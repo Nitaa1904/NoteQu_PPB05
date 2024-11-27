@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:notequ/design_system/styles/color.dart';
 import 'package:notequ/design_system/styles/spacing.dart';
-// import 'package:notequ/design_system/styles/spacing.dart';
 import 'package:notequ/design_system/widget/card/task_card.dart';
 import 'package:notequ/pages/tugasku/detail_tugas.dart';
 
@@ -48,6 +47,13 @@ class _TugaskuState extends State<Tugasku> {
     setState(() {
       tasks.remove(task);
       completedTasks.add(task);
+    });
+  }
+
+  void _markAsIncomplete(Map<String, String> task) {
+    setState(() {
+      completedTasks.remove(task);
+      tasks.add(task);
     });
   }
 
@@ -169,9 +175,13 @@ class _TugaskuState extends State<Tugasku> {
                                           ),
                                         );
                                       },
-                                      trailing: const Icon(
-                                        Icons.check_box,
-                                        color: Colors.green,
+                                      trailing: IconButton(
+                                        icon: const Icon(Icons.check_box,
+                                            color: Colors.green),
+                                        onPressed: () {
+                                          _markAsIncomplete(
+                                              completedTasks[index]);
+                                        },
                                       ),
                                     );
                                   },
