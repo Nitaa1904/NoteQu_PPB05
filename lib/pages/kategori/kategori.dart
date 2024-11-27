@@ -59,6 +59,49 @@ class _KategoriState extends State<Kategori> {
         .toList();
   }
 
+  void showAddCategoryDialog() {
+    final TextEditingController categoryController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          title: const Text("Tambah Kategori Baru"),
+          content: TextField(
+            controller: categoryController,
+            decoration: const InputDecoration(
+              hintText: "Masukkan disini",
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Tutup dialog
+              },
+              child: const Text("Batal"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final newCategory = categoryController.text.trim();
+                if (newCategory.isNotEmpty) {
+                  setState(() {
+                    categories.add(newCategory);
+                  });
+                  Navigator.pop(context); // Tutup dialog
+                }
+              },
+              child: const Text("Simpan"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -79,35 +122,46 @@ class _KategoriState extends State<Kategori> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            SizedBox(
-              height: 32,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: categories.length,
-                itemBuilder: (context, index) {
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 12.0),
-                    child: ChoiceChip(
-                      label: Text(
-                        categories[index],
-                        style: TextStyle(
-                          color: selectedCategory == categories[index]
-                              ? ColorCollection.primary100
-                              : ColorCollection.primary900,
-                        ),
-                      ),
-                      selected: selectedCategory == categories[index],
-                      onSelected: (isSelected) {
-                        setState(() {
-                          selectedCategory = categories[index];
-                        });
+            Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 32,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: categories.length,
+                      itemBuilder: (context, index) {
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 12.0),
+                          child: ChoiceChip(
+                            label: Text(
+                              categories[index],
+                              style: TextStyle(
+                                color: selectedCategory == categories[index]
+                                    ? ColorCollection.primary100
+                                    : ColorCollection.primary900,
+                              ),
+                            ),
+                            selected: selectedCategory == categories[index],
+                            onSelected: (isSelected) {
+                              setState(() {
+                                selectedCategory = categories[index];
+                              });
+                            },
+                            backgroundColor: ColorCollection.primary100,
+                            selectedColor: ColorCollection.primary900,
+                          ),
+                        );
                       },
-                      backgroundColor: ColorCollection.primary100,
-                      selectedColor: ColorCollection.primary900,
                     ),
-                  );
-                },
-              ),
+                  ),
+                ),
+                IconButton(
+                  icon:
+                      const Icon(Icons.add, color: ColorCollection.primary900),
+                  onPressed: showAddCategoryDialog,
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             Expanded(
