@@ -144,6 +144,14 @@ class _TugaskuState extends State<Tugasku> {
                                   child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
+                                    Image(
+                                      image:
+                                          AssetImage('assets/images/Empty.png'),
+                                      width: 170,
+                                      height: 170,
+                                      fit: BoxFit.contain,
+                                    ),
+                                    SizedBox(height: Spacing.md),
                                     Text(
                                       'Belum ada tugas yang selesai',
                                       style: TextStyle(
