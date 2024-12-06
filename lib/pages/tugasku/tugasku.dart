@@ -3,6 +3,7 @@ import 'package:notequ/design_system/styles/color.dart';
 import 'package:notequ/design_system/styles/spacing.dart';
 import 'package:notequ/design_system/widget/card/task_card.dart';
 import 'package:notequ/pages/tugasku/detail_tugas.dart';
+import 'package:notequ/pages/tambah_tugas/my_db_view.dart';
 
 class Tugasku extends StatefulWidget {
   Tugasku({super.key});
@@ -206,7 +207,12 @@ class _TugaskuState extends State<Tugasku> {
       ),
       floatingActionButton: FloatingActionButton(
         shape: const CircleBorder(),
-        onPressed: () {},
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => MyDbView()),
+          );
+        },
         backgroundColor: ColorCollection.primary900,
         child: const Icon(Icons.add, color: ColorCollection.primary100),
       ),
