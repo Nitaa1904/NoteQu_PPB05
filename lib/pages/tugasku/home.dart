@@ -62,7 +62,10 @@ class _HomepageState extends State<Homepage> {
           addTask: _addTask,
         ),
         kalender: Kalender(tasks: tasks),
-        profil: Profil(),
+        profil: Profil(
+          completedTasks: completedTasks.length,
+          pendingTasks: tasks.length,
+        ),
       ),
     );
   }
