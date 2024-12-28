@@ -10,53 +10,58 @@ class CustomAlert extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final _taskController = TextEditingController();
-    final _descriptionController = TextEditingController();
-    String selectedCategory = categories.isNotEmpty ? categories[0] : 'General';
     DateTime? selectedDate;
     TimeOfDay? selectedTime;
 
+    String selectedCategory = categories.isNotEmpty ? categories[0] : 'General';
+
     return AlertDialog(
-      title: const Text('Add Task'),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16.0),
+      ),
+      title: const Text(
+        'Tambah Tugas Baru',
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 20,
+        ),
+      ),
       content: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TextField(
+            TextFormField(
               controller: _taskController,
-              decoration: const InputDecoration(
-                labelText: 'Task Name',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                hintText: 'Masukkan judul tugas',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
               ),
             ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _descriptionController,
-              decoration: const InputDecoration(
-                labelText: 'Description',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 3,
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8.0,
+              runSpacing: 8.0,
+              children: [
+                ...categories.map((category) => ChoiceChip(
+                      label: Text(category),
+                      selected: selectedCategory == category,
+                      onSelected: (isSelected) {
+                        if (isSelected) {
+                          selectedCategory = category;
+                        }
+                      },
+                    )),
+                ActionChip(
+                  label: const Icon(Icons.add),
+                  onPressed: () {
+                    // Tambah kategori baru
+                  },
+                ),
+              ],
             ),
-            const SizedBox(height: 10),
-            DropdownButtonFormField<String>(
-              value: selectedCategory,
-              onChanged: (value) {
-                if (value != null) {
-                  selectedCategory = value;
-                }
-              },
-              items: categories.map((category) {
-                return DropdownMenuItem(
-                  value: category,
-                  child: Text(category),
-                );
-              }).toList(),
-              decoration: const InputDecoration(
-                labelText: 'Category',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 16),
             TextFormField(
               readOnly: true,
               onTap: () async {
@@ -68,13 +73,14 @@ class CustomAlert extends StatelessWidget {
                 );
               },
               decoration: InputDecoration(
-                labelText: selectedDate != null
-                    ? DateFormat('yyyy-MM-dd').format(selectedDate!)
-                    : 'Select Date',
-                border: const OutlineInputBorder(),
+                hintText: 'Pilih tanggal buat tugas kamu',
+                suffixIcon: const Icon(Icons.calendar_today),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 16),
             TextFormField(
               readOnly: true,
               onTap: () async {
@@ -84,11 +90,32 @@ class CustomAlert extends StatelessWidget {
                 );
               },
               decoration: InputDecoration(
-                labelText: selectedTime != null
-                    ? selectedTime!.format(context)
-                    : 'Select Time',
-                border: const OutlineInputBorder(),
+                hintText: 'Pilih waktu buat tugas kamu',
+                suffixIcon: const Icon(Icons.access_time),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
               ),
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8.0,
+              runSpacing: 8.0,
+              children: [
+                ...[5, 10, 15, 30].map((minute) => ChoiceChip(
+                      label: Text('$minute menit sebelumnya'),
+                      selected: false,
+                      onSelected: (isSelected) {
+                        // Atur pengingat
+                      },
+                    )),
+                ActionChip(
+                  label: const Icon(Icons.add),
+                  onPressed: () {
+                    // Tambah pengingat baru
+                  },
+                ),
+              ],
             ),
           ],
         ),
@@ -98,15 +125,13 @@ class CustomAlert extends StatelessWidget {
           onPressed: () {
             Navigator.of(context).pop();
           },
-          child: const Text('Cancel'),
+          child: const Text('Batal'),
         ),
         ElevatedButton(
           onPressed: () {
-            if (_taskController.text.isNotEmpty &&
-                _descriptionController.text.isNotEmpty) {
+            if (_taskController.text.isNotEmpty) {
               onAddTask({
-                'task': _taskController.text,
-                'description': _descriptionController.text,
+                'title': _taskController.text,
                 'category': selectedCategory,
                 'date': selectedDate != null
                     ? DateFormat('yyyy-MM-dd').format(selectedDate!)
@@ -118,7 +143,7 @@ class CustomAlert extends StatelessWidget {
               Navigator.of(context).pop();
             }
           },
-          child: const Text('Add Task'),
+          child: const Text('Selesai'),
         ),
       ],
     );
