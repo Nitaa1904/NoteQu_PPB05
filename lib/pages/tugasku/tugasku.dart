@@ -3,6 +3,7 @@ import 'package:notequ/design_system/styles/color.dart';
 import 'package:notequ/design_system/styles/spacing.dart';
 import 'package:notequ/design_system/widget/card/task_card.dart';
 import 'package:notequ/pages/tugasku/custom_alert.dart';
+import 'package:notequ/pages/tugasku/detail_tugas.dart';
 
 class Tugasku extends StatefulWidget {
   final List<Map<String, String>> tasks;
@@ -129,7 +130,14 @@ class _TugaskuState extends State<Tugasku> {
         final task = taskList[index];
         return TugasCard(
           task: task,
-          onTap: () {},
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => DetailTugas(task: task),
+              ),
+            );
+          },
           trailing: IconButton(
             icon: Icon(
               isCompleted ? Icons.check_box : Icons.check_box_outline_blank,
