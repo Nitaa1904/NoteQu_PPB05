@@ -2,7 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:notequ/design_system/styles/color.dart';
 
 class Profil extends StatelessWidget {
-  const Profil({super.key});
+  final int completedTasks;
+  final int pendingTasks;
+
+  const Profil({
+    super.key,
+    required this.completedTasks,
+    required this.pendingTasks,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -82,10 +89,18 @@ class Profil extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _buildSummaryCard("Tugas Selesai", "0", "dari 4",
-                          ColorCollection.primary900),
-                      _buildSummaryCard("Tugas Tertunda", "4", "",
-                          ColorCollection.neutral600),
+                      _buildSummaryCard(
+                        "Tugas Selesai",
+                        completedTasks.toString(),
+                        "dari ${(completedTasks + pendingTasks).toString()}",
+                        ColorCollection.primary900,
+                      ),
+                      _buildSummaryCard(
+                        "Tugas Tertunda",
+                        pendingTasks.toString(),
+                        "",
+                        ColorCollection.neutral600,
+                      ),
                     ],
                   ),
                   const SizedBox(height: 24),
@@ -100,11 +115,20 @@ class Profil extends StatelessWidget {
                   Container(
                     height: 200,
                     color: ColorCollection.primary100,
-                    child: const Center(
-                      child: Text(
-                        "Belum ada tugas selesai",
-                        style: TextStyle(color: Colors.grey),
-                      ),
+                    child: Center(
+                      child: completedTasks > 0
+                          ? Text(
+                              "${((completedTasks / (completedTasks + pendingTasks)) * 100).toStringAsFixed(1)}% Tugas Selesai",
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green,
+                              ),
+                            )
+                          : const Text(
+                              "Belum ada tugas selesai",
+                              style: TextStyle(color: Colors.grey),
+                            ),
                     ),
                   ),
                 ],
