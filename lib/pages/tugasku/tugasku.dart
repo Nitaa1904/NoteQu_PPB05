@@ -264,8 +264,7 @@ class _TugaskuState extends State<Tugasku> {
             builder: (context) {
               return CustomAlert(
                 onAddTask: (task) {
-                  // Lakukan sesuatu dengan task yang ditambahkan
-                  print(task);
+                  _addTask(task); // Memanggil fungsi untuk menambahkan tugas
                 },
                 categories: [
                   'Semua',
