@@ -4,57 +4,36 @@ import 'package:notequ/design_system/widget/card/task_card.dart';
 import 'package:notequ/pages/tugasku/detail_tugas.dart';
 
 class Kategori extends StatefulWidget {
-  const Kategori({super.key});
+  final List<Map<String, String>> tasks; // Daftar tugas
+  final List<String> categories; // Daftar kategori
+  final Function(Map<String, String>) addTask; // Fungsi untuk menambah tugas
+
+  const Kategori({
+    Key? key,
+    required this.tasks,
+    required this.categories,
+    required this.addTask,
+  }) : super(key: key);
 
   @override
   _KategoriState createState() => _KategoriState();
 }
 
 class _KategoriState extends State<Kategori> {
-  final List<String> categories = [
-    'Semua',
-    'Tugas Kuliah',
-    'Pribadi',
-    'Kerja',
-    'Hobi',
-    'Esport',
-    'Olahraga',
-  ];
+  late List<String> categories; // Kategori lokal
+  String selectedCategory = 'Semua'; // Kategori terpilih
 
-  final List<Map<String, String>> allTasks = [
-    {
-      'category': 'Tugas Kuliah',
-      'title': 'Tugas Logika Matematika',
-      'date': '10-10',
-      'time': '23:59'
-    },
-    {
-      'category': 'Pribadi',
-      'title': 'Jalan-jalan ke Rita Mall',
-      'date': '10-10',
-      'time': '13:00'
-    },
-    {
-      'category': 'Tugas Kuliah',
-      'title': 'Quiz PMPL',
-      'date': '11-10',
-      'time': '23:59'
-    },
-    {
-      'category': 'Tugas Kuliah',
-      'title': 'Quiz Pengalaman Pengguna',
-      'date': '12-10',
-      'time': '22:00'
-    },
-  ];
-
-  String selectedCategory = 'Semua';
+  @override
+  void initState() {
+    super.initState();
+    categories = List.from(widget.categories);
+  }
 
   List<Map<String, String>> get filteredTasks {
     if (selectedCategory == 'Semua') {
-      return allTasks;
+      return widget.tasks;
     }
-    return allTasks
+    return widget.tasks
         .where((task) => task['category'] == selectedCategory)
         .toList();
   }
@@ -73,25 +52,24 @@ class _KategoriState extends State<Kategori> {
           content: TextField(
             controller: categoryController,
             decoration: const InputDecoration(
-              hintText: "Masukkan disini",
+              hintText: "Masukkan kategori baru",
               border: OutlineInputBorder(),
             ),
           ),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.pop(context); // Tutup dialog
-              },
+              onPressed: () => Navigator.pop(context),
               child: const Text("Batal"),
             ),
             ElevatedButton(
               onPressed: () {
                 final newCategory = categoryController.text.trim();
-                if (newCategory.isNotEmpty) {
+                if (newCategory.isNotEmpty &&
+                    !categories.contains(newCategory)) {
                   setState(() {
                     categories.add(newCategory);
                   });
-                  Navigator.pop(context); // Tutup dialog
+                  Navigator.pop(context);
                 }
               },
               child: const Text("Simpan"),
@@ -109,9 +87,10 @@ class _KategoriState extends State<Kategori> {
         title: const Text(
           "Kategori",
           style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: ColorCollection.primary900),
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: ColorCollection.primary900,
+          ),
         ),
         elevation: 4.0,
         shadowColor: ColorCollection.primary900.withOpacity(0.3),
@@ -165,24 +144,36 @@ class _KategoriState extends State<Kategori> {
             ),
             const SizedBox(height: 16),
             Expanded(
-              child: ListView.builder(
-                itemCount: filteredTasks.length,
-                itemBuilder: (context, index) {
-                  return TugasCard(
-                    task: filteredTasks[index],
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => DetailTugas(
-                            task: filteredTasks[index],
-                          ),
+              child: filteredTasks.isEmpty
+                  ? Center(
+                      child: Text(
+                        selectedCategory == 'Semua'
+                            ? "Tidak ada tugas yang tersedia."
+                            : "Tidak ada tugas untuk kategori \"$selectedCategory\".",
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: ColorCollection.neutral600,
                         ),
-                      );
-                    },
-                  );
-                },
-              ),
+                      ),
+                    )
+                  : ListView.builder(
+                      itemCount: filteredTasks.length,
+                      itemBuilder: (context, index) {
+                        final task = filteredTasks[index];
+                        return TugasCard(
+                          task: task,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => DetailTugas(task: task),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
             ),
           ],
         ),
