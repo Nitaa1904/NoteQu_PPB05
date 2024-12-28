@@ -3,45 +3,24 @@ import 'package:notequ/design_system/styles/color.dart';
 import 'package:notequ/design_system/styles/spacing.dart';
 import 'package:notequ/design_system/widget/card/task_card.dart';
 import 'package:notequ/pages/tugasku/detail_tugas.dart';
+import 'package:notequ/pages/tugasku/custom_alert.dart';
 
 class Tugasku extends StatefulWidget {
-  Tugasku({super.key});
+  // Tugasku({super.key});
 
   @override
-  State<Tugasku> createState() => _TugaskuState();
+  _TugaskuState createState() => _TugaskuState();
 }
 
 class _TugaskuState extends State<Tugasku> {
-  // Daftar tugas belum selesai
-  final List<Map<String, String>> tasks = [
-    {
-      'category': 'Tugas Kuliah',
-      'title': 'Tugas Logika Matematika',
-      'date': '10-10',
-      'time': '23:59'
-    },
-    {
-      'category': 'Pribadi',
-      'title': 'Jalan-jalan ke Rita Mall',
-      'date': '10-10',
-      'time': '13:00'
-    },
-    {
-      'category': 'Tugas Kuliah',
-      'title': 'Quiz PMPL',
-      'date': '11-10',
-      'time': '23:59'
-    },
-    {
-      'category': 'Tugas Kuliah',
-      'title': 'Quiz Pengalaman Pengguna',
-      'date': '12-10',
-      'time': '22:00'
-    },
-  ];
-
-  // Daftar tugas sudah selesai
+  final List<Map<String, String>> tasks = [];
   final List<Map<String, String>> completedTasks = [];
+
+  void _addTask(Map<String, String> newTask) {
+    setState(() {
+      tasks.add(newTask);
+    });
+  }
 
   void _markAsCompleted(Map<String, String> task) {
     setState(() {
@@ -55,6 +34,79 @@ class _TugaskuState extends State<Tugasku> {
       completedTasks.remove(task);
       tasks.add(task);
     });
+  }
+
+  Widget _buildTaskList(List<Map<String, String>> taskList,
+      {bool isCompleted = false}) {
+    if (taskList.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Image(
+              image: AssetImage('assets/images/Empty.png'),
+              width: 170,
+              height: 170,
+              fit: BoxFit.contain,
+            ),
+            const SizedBox(height: Spacing.md),
+            Text(
+              isCompleted
+                  ? 'Belum ada tugas yang selesai'
+                  : 'Tidak ada tugas mendatang.',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: ColorCollection.primary900,
+              ),
+            ),
+            if (isCompleted) ...[
+              const SizedBox(height: Spacing.md),
+              const Text(
+                'Checklist tugas kamu buat tandain \nkalau tugas kamu udah selesai',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: ColorCollection.neutral600,
+                ),
+              ),
+            ]
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      itemCount: taskList.length,
+      itemBuilder: (context, index) {
+        final task = taskList[index];
+        return TugasCard(
+          task: {
+            'category': task['category'] ?? 'Kategori Tidak Diketahui',
+            'title': task['title'] ?? 'Judul Tidak Diketahui',
+            'date': task['date'] ?? 'Tanggal Tidak Diketahui',
+            'time': task['time'] ?? 'Waktu Tidak Diketahui',
+          },
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => DetailTugas(task: task),
+              ),
+            );
+          },
+          trailing: IconButton(
+            icon: Icon(
+              isCompleted ? Icons.check_box : Icons.check_box_outline_blank,
+              color: isCompleted ? Colors.green : ColorCollection.neutral500,
+            ),
+            onPressed: () {
+              isCompleted ? _markAsIncomplete(task) : _markAsCompleted(task);
+            },
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -206,7 +258,28 @@ class _TugaskuState extends State<Tugasku> {
       ),
       floatingActionButton: FloatingActionButton(
         shape: const CircleBorder(),
-        onPressed: () {},
+        onPressed: () {
+          showDialog(
+            context: context,
+            builder: (context) {
+              return CustomAlert(
+                onAddTask: (task) {
+                  // Lakukan sesuatu dengan task yang ditambahkan
+                  print(task);
+                },
+                categories: [
+                  'Semua',
+                  'Tugas Kuliah',
+                  'Pribadi',
+                  'Kerja',
+                  'Hobi',
+                  'Esport',
+                  'Olahraga'
+                ],
+              );
+            },
+          );
+        },
         backgroundColor: ColorCollection.primary900,
         child: const Icon(Icons.add, color: ColorCollection.primary100),
       ),
