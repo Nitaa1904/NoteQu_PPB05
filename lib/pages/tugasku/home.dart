@@ -61,7 +61,7 @@ class _HomepageState extends State<Homepage> {
           categories: categories,
           addTask: _addTask,
         ),
-        kalender: Kalender(),
+        kalender: Kalender(tasks: tasks),
         profil: Profil(),
       ),
     );

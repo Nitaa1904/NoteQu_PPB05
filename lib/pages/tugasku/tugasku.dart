@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:notequ/design_system/styles/color.dart';
 import 'package:notequ/design_system/styles/spacing.dart';
 import 'package:notequ/design_system/widget/card/task_card.dart';
-import 'package:notequ/pages/tugasku/detail_tugas.dart';
 import 'package:notequ/pages/tugasku/custom_alert.dart';
 
 class Tugasku extends StatefulWidget {
