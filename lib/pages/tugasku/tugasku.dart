@@ -124,14 +124,14 @@ class _TugaskuState extends State<Tugasku> {
               height: 150,
               fit: BoxFit.contain,
             ),
-            const SizedBox(height: 16), // Jarak antara gambar dan teks
+            const SizedBox(height: 16),
             Text(
               isCompleted
                   ? 'Belum ada tugas yang selesai.'
                   : 'Tidak ada tugas mendatang.',
               style: const TextStyle(
                   fontSize: 16, color: ColorCollection.neutral600),
-              textAlign: TextAlign.center, // Memastikan teks di tengah
+              textAlign: TextAlign.center,
             ),
           ],
         ),
@@ -144,13 +144,35 @@ class _TugaskuState extends State<Tugasku> {
         final task = taskList[index];
         return TugasCard(
           task: task,
-          onTap: () {
-            Navigator.push(
+          onTap: () async {
+            final result = await Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => DetailTugas(task: task),
+                builder: (context) => DetailTugas(
+                  task: task,
+                  onTaskUpdated: (updatedTask) {
+                    setState(() {
+                      taskList[index] = updatedTask;
+                    });
+                  },
+                  onTaskDeleted: () {
+                    setState(() {
+                      taskList.removeAt(index);
+                    });
+                  },
+                  onTaskCompleted: () {
+                    setState(() {
+                      taskList.removeAt(index);
+                      widget.markAsCompleted(task);
+                    });
+                  },
+                ),
               ),
             );
+
+            if (result is bool && result) {
+              setState(() {}); // Refresh state
+            }
           },
           trailing: IconButton(
             icon: Icon(

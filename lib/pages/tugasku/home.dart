@@ -31,6 +31,21 @@ class _HomepageState extends State<Homepage> {
     });
   }
 
+  void _updateTask(Map<String, String> updatedTask) {
+    setState(() {
+      final index = tasks.indexWhere((task) => task['id'] == updatedTask['id']);
+      if (index != -1) {
+        tasks[index] = updatedTask;
+      }
+    });
+  }
+
+  void _deleteTask(Map<String, String> task) {
+    setState(() {
+      tasks.remove(task);
+    });
+  }
+
   void _markAsCompleted(Map<String, String> task) {
     setState(() {
       tasks.remove(task);
@@ -60,6 +75,9 @@ class _HomepageState extends State<Homepage> {
           tasks: tasks,
           categories: categories,
           addTask: _addTask,
+          updateTask: _updateTask,
+          deleteTask: _deleteTask,
+          completeTask: _markAsCompleted,
         ),
         kalender: Kalender(tasks: tasks),
         profil: Profil(
