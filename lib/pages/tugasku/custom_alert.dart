@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/timezone.dart' as tz;
 
 class CustomAlert extends StatefulWidget {
   final Function(Map<String, String>) onAddTask;
@@ -19,11 +21,53 @@ class _CustomAlertState extends State<CustomAlert> {
   String selectedCategory = '';
   int? selectedReminder;
 
+  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
+
   @override
   void initState() {
     super.initState();
     selectedCategory =
         widget.categories.isNotEmpty ? widget.categories[0] : 'General';
+    _initializeNotifications();
+  }
+
+  void _initializeNotifications() async {
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('app_icon');
+
+    const InitializationSettings initializationSettings =
+        InitializationSettings(android: initializationSettingsAndroid);
+
+    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+  }
+
+  Future<void> scheduleNotification(
+      String title, String body, DateTime scheduledDate) async {
+    final tzScheduledDate = tz.TZDateTime.from(scheduledDate, tz.local);
+
+    const AndroidNotificationDetails androidPlatformChannelSpecifics =
+        AndroidNotificationDetails(
+      'your_channel_id',
+      'your_channel_name',
+      channelDescription: 'your_channel_description',
+      importance: Importance.high,
+      priority: Priority.high,
+    );
+
+    const NotificationDetails platformChannelSpecifics =
+        NotificationDetails(android: androidPlatformChannelSpecifics);
+
+    await flutterLocalNotificationsPlugin.zonedSchedule(
+      0,
+      title,
+      body,
+      tzScheduledDate,
+      platformChannelSpecifics,
+      androidAllowWhileIdle: true,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+    );
   }
 
   @override
@@ -184,6 +228,33 @@ class _CustomAlertState extends State<CustomAlert> {
         ElevatedButton(
           onPressed: () {
             if (_taskController.text.isNotEmpty) {
+              final now = DateTime.now();
+
+              if (selectedDate != null && selectedTime != null) {
+                DateTime scheduledDate = DateTime(
+                  selectedDate!.year,
+                  selectedDate!.month,
+                  selectedDate!.day,
+                  selectedTime!.hour,
+                  selectedTime!.minute,
+                );
+
+                if (selectedReminder != null) {
+                  scheduledDate = scheduledDate
+                      .subtract(Duration(minutes: selectedReminder!));
+                }
+
+                if (scheduledDate.isAfter(now)) {
+                  scheduleNotification(
+                    'Pengingat Tugas',
+                    'Tugas: ${_taskController.text} akan segera dimulai!',
+                    scheduledDate,
+                  );
+                } else {
+                  print('Waktu pengingat tidak valid.');
+                }
+              }
+
               widget.onAddTask({
                 'title': _taskController.text,
                 'category': selectedCategory,
