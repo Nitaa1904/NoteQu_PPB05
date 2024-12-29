@@ -115,28 +115,64 @@ class _TugaskuState extends State<Tugasku> {
       {required bool isCompleted}) {
     if (taskList.isEmpty) {
       return Center(
-        child: Text(
-          isCompleted
-              ? 'Belum ada tugas yang selesai.'
-              : 'Tidak ada tugas mendatang.',
-          style:
-              const TextStyle(fontSize: 16, color: ColorCollection.neutral600),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset(
+              './assets/images/Empty.png',
+              width: 150,
+              height: 150,
+              fit: BoxFit.contain,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              isCompleted
+                  ? 'Belum ada tugas yang selesai.'
+                  : 'Tidak ada tugas mendatang.',
+              style: const TextStyle(
+                  fontSize: 16, color: ColorCollection.neutral600),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       );
     }
+
     return ListView.builder(
       itemCount: taskList.length,
       itemBuilder: (context, index) {
         final task = taskList[index];
         return TugasCard(
           task: task,
-          onTap: () {
-            Navigator.push(
+          onTap: () async {
+            final result = await Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => DetailTugas(task: task),
+                builder: (context) => DetailTugas(
+                  task: task,
+                  onTaskUpdated: (updatedTask) {
+                    setState(() {
+                      taskList[index] = updatedTask;
+                    });
+                  },
+                  onTaskDeleted: () {
+                    setState(() {
+                      taskList.removeAt(index);
+                    });
+                  },
+                  onTaskCompleted: () {
+                    setState(() {
+                      taskList.removeAt(index);
+                      widget.markAsCompleted(task);
+                    });
+                  },
+                ),
               ),
             );
+
+            if (result is bool && result) {
+              setState(() {}); // Refresh state
+            }
           },
           trailing: IconButton(
             icon: Icon(

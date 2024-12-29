@@ -7,12 +7,20 @@ class Kategori extends StatefulWidget {
   final List<Map<String, String>> tasks; // Daftar tugas
   final List<String> categories; // Daftar kategori
   final Function(Map<String, String>) addTask; // Fungsi untuk menambah tugas
+  final Function(Map<String, String>) updateTask; // Fungsi untuk mengedit tugas
+  final Function(Map<String, String>)
+      deleteTask; // Fungsi untuk menghapus tugas
+  final Function(Map<String, String>)
+      completeTask; // Fungsi untuk menyelesaikan tugas
 
   const Kategori({
     Key? key,
     required this.tasks,
     required this.categories,
     required this.addTask,
+    required this.updateTask,
+    required this.deleteTask,
+    required this.completeTask,
   }) : super(key: key);
 
   @override
@@ -167,7 +175,13 @@ class _KategoriState extends State<Kategori> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => DetailTugas(task: task),
+                                builder: (context) => DetailTugas(
+                                  task: task,
+                                  onTaskUpdated: widget.updateTask,
+                                  onTaskDeleted: () => widget.deleteTask(task),
+                                  onTaskCompleted: () =>
+                                      widget.completeTask(task),
+                                ),
                               ),
                             );
                           },
