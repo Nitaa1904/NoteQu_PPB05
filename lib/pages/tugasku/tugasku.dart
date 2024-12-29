@@ -115,15 +115,29 @@ class _TugaskuState extends State<Tugasku> {
       {required bool isCompleted}) {
     if (taskList.isEmpty) {
       return Center(
-        child: Text(
-          isCompleted
-              ? 'Belum ada tugas yang selesai.'
-              : 'Tidak ada tugas mendatang.',
-          style:
-              const TextStyle(fontSize: 16, color: ColorCollection.neutral600),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset(
+              './assets/images/Empty.png',
+              width: 150,
+              height: 150,
+              fit: BoxFit.contain,
+            ),
+            const SizedBox(height: 16), // Jarak antara gambar dan teks
+            Text(
+              isCompleted
+                  ? 'Belum ada tugas yang selesai.'
+                  : 'Tidak ada tugas mendatang.',
+              style: const TextStyle(
+                  fontSize: 16, color: ColorCollection.neutral600),
+              textAlign: TextAlign.center, // Memastikan teks di tengah
+            ),
+          ],
         ),
       );
     }
+
     return ListView.builder(
       itemCount: taskList.length,
       itemBuilder: (context, index) {
