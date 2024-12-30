@@ -12,6 +12,6 @@ class ColorCollection {
   static const Color neutral500 = Color(0xFFadb5bd);
   static const Color neutral600 = Color(0xFF6c757d);
   static const Color neutral700 = Color(0xFF495057);
-  static const Color neutral900 = Color(0xFF343a40);
+  static const Color neutral800 = Color(0xFF343a40);
 
 }

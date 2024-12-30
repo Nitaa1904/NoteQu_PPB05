@@ -23,7 +23,7 @@ class Profil extends StatelessWidget {
             // Bagian header dengan background full width
             Container(
               width: double.infinity,
-              color: Colors.black,
+              color: ColorCollection.primary900,
               padding: const EdgeInsets.symmetric(vertical: 24),
               child: Column(
                 children: [
@@ -37,13 +37,14 @@ class Profil extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: ColorCollection.primary100,
                     ),
                   ),
                   const SizedBox(height: 8),
                   const Text(
                     "budi123@gmail.com",
-                    style: TextStyle(fontSize: 16, color: Colors.white),
+                    style: TextStyle(
+                        fontSize: 14, color: ColorCollection.neutral500),
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
@@ -51,8 +52,8 @@ class Profil extends StatelessWidget {
                       // Tambahkan logika edit profil
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: Colors.black,
+                      backgroundColor: ColorCollection.primary100,
+                      foregroundColor: ColorCollection.primary900,
                       padding: const EdgeInsets.symmetric(
                           horizontal: 24, vertical: 12),
                       shape: RoundedRectangleBorder(

@@ -147,8 +147,8 @@ class _TugaskuState extends State<Tugasku> {
                                     Image(
                                       image:
                                           AssetImage('assets/images/Empty.png'),
-                                      width: 170,
-                                      height: 170,
+                                      width: 350,
+                                      height: 350,
                                       fit: BoxFit.contain,
                                     ),
                                     SizedBox(height: Spacing.md),
@@ -185,7 +185,7 @@ class _TugaskuState extends State<Tugasku> {
                                       },
                                       trailing: IconButton(
                                         icon: const Icon(Icons.check_box,
-                                            color: Colors.green),
+                                            color: ColorCollection.accentGreen),
                                         onPressed: () {
                                           _markAsIncomplete(
                                               completedTasks[index]);

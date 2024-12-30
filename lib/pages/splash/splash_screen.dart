@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:notequ/design_system/styles/color.dart';
-import 'package:notequ/pages/tugasku/home.dart';
+import 'package:notequ/pages/accountregist/signup.dart';
+// import 'package:notequ/pages/tugasku/home.dart';
 // import 'package:flutter_svg/svg.dart';
 // import 'package:notequ/pages/tugasku/tugasku.dart';
 
@@ -43,7 +44,7 @@ class _SplashScreenState extends State<SplashScreen> {
     await Future.delayed(const Duration(seconds: 3));
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (BuildContext context) => const Homepage()),
+      MaterialPageRoute(builder: (BuildContext context) => SignUpPage()),
     );
   }
 }
