@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:notequ/design_system/styles/color.dart';
+import 'package:notequ/pages/accountregist/signup.dart';
 
 class Profil extends StatelessWidget {
   final int completedTasks;
@@ -19,21 +20,22 @@ class Profil extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          "Profil",
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          "Profilku",
+          style: TextStyle(
+              fontWeight: FontWeight.bold, color: ColorCollection.primary900),
         ),
         elevation: 4.0,
         shadowColor: ColorCollection.primary900.withOpacity(0.3),
         backgroundColor: ColorCollection.primary100,
       ),
-      backgroundColor: Colors.white,
+      backgroundColor: ColorCollection.primary100,
       body: SingleChildScrollView(
         child: Column(
           children: [
             // Bagian header
             Container(
               width: double.infinity,
-              color: Colors.black,
+              color: ColorCollection.primary900,
               padding: const EdgeInsets.symmetric(vertical: 24),
               child: Column(
                 children: [
@@ -47,13 +49,14 @@ class Profil extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: ColorCollection.primary100,
                     ),
                   ),
                   const SizedBox(height: 8),
                   const Text(
                     "budi123@gmail.com",
-                    style: TextStyle(fontSize: 16, color: Colors.white),
+                    style: TextStyle(
+                        fontSize: 14, color: ColorCollection.neutral500),
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
@@ -61,8 +64,8 @@ class Profil extends StatelessWidget {
                       // Tambahkan logika edit profil
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: Colors.black,
+                      backgroundColor: ColorCollection.primary100,
+                      foregroundColor: ColorCollection.primary900,
                       padding: const EdgeInsets.symmetric(
                           horizontal: 24, vertical: 12),
                       shape: RoundedRectangleBorder(
@@ -84,9 +87,9 @@ class Profil extends StatelessWidget {
                   const Text(
                     "Ringkasan Tugas Kamu",
                     style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: ColorCollection.primary900),
                   ),
                   const SizedBox(height: 16),
                   Row(
@@ -98,11 +101,14 @@ class Profil extends StatelessWidget {
                         "dari ${(completedTasks + pendingTasks).toString()}",
                         ColorCollection.primary900,
                       ),
+                      const SizedBox(
+                        width: 12,
+                      ),
                       _buildSummaryCard(
                         "Tugas Tertunda",
                         pendingTasks.toString(),
                         "",
-                        ColorCollection.neutral600,
+                        ColorCollection.primary900,
                       ),
                     ],
                   ),
@@ -117,20 +123,54 @@ class Profil extends StatelessWidget {
                   const SizedBox(height: 8),
                   Container(
                     height: 200,
-                    decoration: BoxDecoration(
-                      color: ColorCollection.primary100.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: tasksCompletionData.length >= 7
-                        ? LineChart(
-                            _buildLineChartData(),
-                          )
-                        : const Center(
-                            child: Text(
-                              "Data tidak cukup untuk grafik",
-                              style: TextStyle(color: Colors.red),
+                    color: ColorCollection.primary100,
+                    child: Center(
+                      child: completedTasks > 0
+                          ? Text(
+                              "${((completedTasks / (completedTasks + pendingTasks)) * 100).toStringAsFixed(1)}% Tugas Selesai",
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green,
+                              ),
+                            )
+                          : const Text(
+                              "Belum ada tugas selesai",
+                              style: TextStyle(color: Colors.grey),
                             ),
-                          ),
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+                  Center(
+                      child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        // Tambahkan logika logout
+                        Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => SignUpPage()));
+                      },
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 24),
+                        backgroundColor: ColorCollection.accentRed,
+                        foregroundColor: ColorCollection.primary100,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Text("Logout"),
+                    ),
+                  )),
+                  const SizedBox(
+                    height: 24,
+                  ),
+                  const Center(
+                    child: Text(
+                      'versi 1.0.0',
+                      style: TextStyle(
+                          fontSize: 14, color: ColorCollection.neutral600),
+                    ),
                   ),
                 ],
               ),
@@ -145,13 +185,14 @@ class Profil extends StatelessWidget {
       String title, String value, String subtitle, Color color) {
     return Expanded(
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 8),
-        padding: const EdgeInsets.all(16),
+        height: 130,
         decoration: BoxDecoration(
-          color: Colors.grey[200],
+          color: ColorCollection.neutral200,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text(
               value,
@@ -164,7 +205,8 @@ class Profil extends StatelessWidget {
             if (subtitle.isNotEmpty)
               Text(
                 subtitle,
-                style: const TextStyle(fontSize: 14, color: Colors.grey),
+                style: const TextStyle(
+                    fontSize: 14, color: ColorCollection.neutral600),
               ),
             const SizedBox(height: 8),
             Text(

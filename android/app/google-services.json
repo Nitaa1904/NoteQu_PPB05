@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "725596780531",
+    "project_id": "notequ-project",
+    "storage_bucket": "notequ-project.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:725596780531:android:37a2e31fe2241ac14cc486",
+        "android_client_info": {
+          "package_name": "com.example.notequ"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "725596780531-9u403ntevdntnbs0avu8a1eel5unf8na.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.notequ",
+            "certificate_hash": "da39a3ee5e6b4b0d3255bfef95601890afd80709"
+          }
+        },
+        {
+          "client_id": "725596780531-hl5ti83a3goi3nbsh6pjl5eim7r08bp7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA63T6N2LWrvOeh9kMtcb1R9KyGHptLbcI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "725596780531-hl5ti83a3goi3nbsh6pjl5eim7r08bp7.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
