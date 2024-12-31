@@ -4,57 +4,44 @@ import 'package:notequ/design_system/widget/card/task_card.dart';
 import 'package:notequ/pages/tugasku/detail_tugas.dart';
 
 class Kategori extends StatefulWidget {
-  const Kategori({super.key});
+  final List<Map<String, String>> tasks; // Daftar tugas
+  final List<String> categories; // Daftar kategori
+  final Function(Map<String, String>) addTask; // Fungsi untuk menambah tugas
+  final Function(Map<String, String>) updateTask; // Fungsi untuk mengedit tugas
+  final Function(Map<String, String>)
+      deleteTask; // Fungsi untuk menghapus tugas
+  final Function(Map<String, String>)
+      completeTask; // Fungsi untuk menyelesaikan tugas
+
+  const Kategori({
+    Key? key,
+    required this.tasks,
+    required this.categories,
+    required this.addTask,
+    required this.updateTask,
+    required this.deleteTask,
+    required this.completeTask,
+  }) : super(key: key);
 
   @override
   _KategoriState createState() => _KategoriState();
 }
 
 class _KategoriState extends State<Kategori> {
-  final List<String> categories = [
-    'Semua',
-    'Tugas Kuliah',
-    'Pribadi',
-    'Kerja',
-    'Hobi',
-    'Esport',
-    'Olahraga',
-  ];
+  late List<String> categories; // Kategori lokal
+  String selectedCategory = 'Semua'; // Kategori terpilih
 
-  final List<Map<String, String>> allTasks = [
-    {
-      'category': 'Tugas Kuliah',
-      'title': 'Tugas Logika Matematika',
-      'date': '10-10',
-      'time': '23:59'
-    },
-    {
-      'category': 'Pribadi',
-      'title': 'Jalan-jalan ke Rita Mall',
-      'date': '10-10',
-      'time': '13:00'
-    },
-    {
-      'category': 'Tugas Kuliah',
-      'title': 'Quiz PMPL',
-      'date': '11-10',
-      'time': '23:59'
-    },
-    {
-      'category': 'Tugas Kuliah',
-      'title': 'Quiz Pengalaman Pengguna',
-      'date': '12-10',
-      'time': '22:00'
-    },
-  ];
-
-  String selectedCategory = 'Semua';
+  @override
+  void initState() {
+    super.initState();
+    categories = List.from(widget.categories);
+  }
 
   List<Map<String, String>> get filteredTasks {
     if (selectedCategory == 'Semua') {
-      return allTasks;
+      return widget.tasks;
     }
-    return allTasks
+    return widget.tasks
         .where((task) => task['category'] == selectedCategory)
         .toList();
   }
@@ -73,25 +60,24 @@ class _KategoriState extends State<Kategori> {
           content: TextField(
             controller: categoryController,
             decoration: const InputDecoration(
-              hintText: "Masukkan disini",
+              hintText: "Masukkan kategori baru",
               border: OutlineInputBorder(),
             ),
           ),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.pop(context); // Tutup dialog
-              },
+              onPressed: () => Navigator.pop(context),
               child: const Text("Batal"),
             ),
             ElevatedButton(
               onPressed: () {
                 final newCategory = categoryController.text.trim();
-                if (newCategory.isNotEmpty) {
+                if (newCategory.isNotEmpty &&
+                    !categories.contains(newCategory)) {
                   setState(() {
                     categories.add(newCategory);
                   });
-                  Navigator.pop(context); // Tutup dialog
+                  Navigator.pop(context);
                 }
               },
               child: const Text("Simpan"),
@@ -109,9 +95,9 @@ class _KategoriState extends State<Kategori> {
         title: const Text(
           "Kategori",
           style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: ColorCollection.primary900),
+            fontWeight: FontWeight.bold,
+            color: ColorCollection.primary900,
+          ),
         ),
         elevation: 4.0,
         shadowColor: ColorCollection.primary900.withOpacity(0.3),
@@ -133,7 +119,7 @@ class _KategoriState extends State<Kategori> {
                       itemBuilder: (context, index) {
                         return Padding(
                           padding: const EdgeInsets.only(right: 12.0),
-                          child: ChoiceChip(
+                          child: RawChip(
                             label: Text(
                               categories[index],
                               style: TextStyle(
@@ -142,6 +128,7 @@ class _KategoriState extends State<Kategori> {
                                     : ColorCollection.primary900,
                               ),
                             ),
+                            showCheckmark: false,
                             selected: selectedCategory == categories[index],
                             onSelected: (isSelected) {
                               setState(() {
@@ -165,24 +152,60 @@ class _KategoriState extends State<Kategori> {
             ),
             const SizedBox(height: 16),
             Expanded(
-              child: ListView.builder(
-                itemCount: filteredTasks.length,
-                itemBuilder: (context, index) {
-                  return TugasCard(
-                    task: filteredTasks[index],
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => DetailTugas(
-                            task: filteredTasks[index],
+              child: filteredTasks.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Image.asset(
+                            '../assets/images/kategori.png',
+                            width: 400,
+                            height: 400,
                           ),
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'Belum ada tugas nih',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: ColorCollection.primary900),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            selectedCategory == 'Semua'
+                                ? "Belum ada tugas buat kamu sekarang"
+                                : "Belum ada tugas buat kategori \"$selectedCategory\"",
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: ColorCollection.neutral600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      itemCount: filteredTasks.length,
+                      itemBuilder: (context, index) {
+                        final task = filteredTasks[index];
+                        return TugasCard(
+                          task: task,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => DetailTugas(
+                                  task: task,
+                                  onTaskUpdated: widget.updateTask,
+                                  onTaskDeleted: () => widget.deleteTask(task),
+                                  onTaskCompleted: () =>
+                                      widget.completeTask(task),
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
             ),
           ],
         ),

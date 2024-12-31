@@ -3,6 +3,7 @@ import 'package:notequ/design_system/styles/color.dart';
 import 'package:notequ/design_system/widget/field/input_field.dart';
 import 'package:notequ/pages/accountregist/signup.dart';
 import 'package:notequ/pages/tugasku/home.dart';
+// import 'package:notequ/services/auth_service.dart';
 
 class LoginPage extends StatelessWidget {
   LoginPage({super.key});
@@ -11,6 +12,12 @@ class LoginPage extends StatelessWidget {
   final TextEditingController passwordController = TextEditingController();
 
   @override
+  // void dispose() {
+  //   // super.dispose();
+  //   emailController.dispose();
+  //   passwordController.dispose();
+  // }
+
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -71,7 +78,7 @@ class LoginPage extends StatelessWidget {
                       width: double.infinity,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 20),
+                          padding: const EdgeInsets.symmetric(vertical: 24),
                           backgroundColor: ColorCollection.primary900,
                           foregroundColor: ColorCollection.primary100,
                           shape: RoundedRectangleBorder(
@@ -114,20 +121,22 @@ class LoginPage extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 16),
-              // Tombol media sosial
+              // Tombol Login Google
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: () {
-                    // Tambahkan logika login Google
-                  },
-                  // icon: Image.asset('assets/images/icon_google.png'),
+                  onPressed: () {},
+                  icon: Image.asset(
+                    '../assets/images/icon-google.png',
+                    width: 24,
+                    height: 24,
+                  ),
                   label: const Text(
                     "Masuk dengan Google",
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    padding: const EdgeInsets.symmetric(vertical: 24),
                     backgroundColor: ColorCollection.primary100,
                     foregroundColor: ColorCollection.primary900,
                     shape: RoundedRectangleBorder(

@@ -2,61 +2,30 @@ import 'package:flutter/material.dart';
 import 'package:notequ/design_system/styles/color.dart';
 import 'package:notequ/design_system/styles/spacing.dart';
 import 'package:notequ/design_system/widget/card/task_card.dart';
+import 'package:notequ/pages/tugasku/custom_alert.dart';
 import 'package:notequ/pages/tugasku/detail_tugas.dart';
 
 class Tugasku extends StatefulWidget {
-  Tugasku({super.key});
+  final List<Map<String, String>> tasks;
+  final List<Map<String, String>> completedTasks;
+  final void Function(Map<String, String>) addTask;
+  final void Function(Map<String, String>) markAsCompleted;
+  final void Function(Map<String, String>) markAsIncomplete;
+
+  const Tugasku({
+    Key? key,
+    required this.tasks,
+    required this.completedTasks,
+    required this.addTask,
+    required this.markAsCompleted,
+    required this.markAsIncomplete,
+  }) : super(key: key);
 
   @override
-  State<Tugasku> createState() => _TugaskuState();
+  _TugaskuState createState() => _TugaskuState();
 }
 
 class _TugaskuState extends State<Tugasku> {
-  // Daftar tugas belum selesai
-  final List<Map<String, String>> tasks = [
-    {
-      'category': 'Tugas Kuliah',
-      'title': 'Tugas Logika Matematika',
-      'date': '10-10',
-      'time': '23:59'
-    },
-    {
-      'category': 'Pribadi',
-      'title': 'Jalan-jalan ke Rita Mall',
-      'date': '10-10',
-      'time': '13:00'
-    },
-    {
-      'category': 'Tugas Kuliah',
-      'title': 'Quiz PMPL',
-      'date': '11-10',
-      'time': '23:59'
-    },
-    {
-      'category': 'Tugas Kuliah',
-      'title': 'Quiz Pengalaman Pengguna',
-      'date': '12-10',
-      'time': '22:00'
-    },
-  ];
-
-  // Daftar tugas sudah selesai
-  final List<Map<String, String>> completedTasks = [];
-
-  void _markAsCompleted(Map<String, String> task) {
-    setState(() {
-      tasks.remove(task);
-      completedTasks.add(task);
-    });
-  }
-
-  void _markAsIncomplete(Map<String, String> task) {
-    setState(() {
-      completedTasks.remove(task);
-      tasks.add(task);
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -69,14 +38,19 @@ class _TugaskuState extends State<Tugasku> {
             const Text(
               'Selamat Datang!',
               style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: ColorCollection.primary900),
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: ColorCollection.primary900,
+              ),
             ),
-            const Text('Mau buat tugas apa hari ini?',
-                style:
-                    TextStyle(fontSize: 14, color: ColorCollection.neutral600)),
-            const SizedBox(height: 32),
+            const SizedBox(
+              height: 8,
+            ),
+            const Text(
+              'Mau buat tugas apa hari ini?',
+              style: TextStyle(fontSize: 16, color: ColorCollection.neutral600),
+            ),
+            const SizedBox(height: 24),
             Expanded(
               child: DefaultTabController(
                 length: 2,
@@ -86,114 +60,26 @@ class _TugaskuState extends State<Tugasku> {
                     const TabBar(
                       labelColor: ColorCollection.primary900,
                       unselectedLabelColor: ColorCollection.neutral500,
-                      labelStyle: TextStyle(fontWeight: FontWeight.bold),
-                      unselectedLabelStyle:
-                          TextStyle(fontWeight: FontWeight.normal),
                       indicator: UnderlineTabIndicator(
                         borderSide: BorderSide(
                           color: ColorCollection.primary900,
                           width: 3.0,
                         ),
                       ),
-                      indicatorSize: TabBarIndicatorSize.tab,
                       tabs: [
                         Tab(
-                          child: Text('Tugas Mendatang'),
+                          text: 'Tugas Mendatang',
                         ),
                         Tab(text: 'Sudah Selesai'),
                       ],
                     ),
-                    const SizedBox(
-                      height: Spacing.lg,
-                    ),
+                    const SizedBox(height: Spacing.lg),
                     Expanded(
                       child: TabBarView(
                         children: [
-                          // Tab Tugas Mendatang
-                          tasks.isEmpty
-                              ? const Center(
-                                  child: Text('Tidak ada tugas mendatang.'))
-                              : ListView.builder(
-                                  itemCount: tasks.length,
-                                  itemBuilder: (context, index) {
-                                    return TugasCard(
-                                      task: tasks[index],
-                                      onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                DetailTugas(task: tasks[index]),
-                                          ),
-                                        );
-                                      },
-                                      trailing: IconButton(
-                                        icon: const Icon(
-                                            Icons.check_box_outline_blank,
-                                            color: ColorCollection.neutral500),
-                                        onPressed: () {
-                                          _markAsCompleted(tasks[index]);
-                                        },
-                                      ),
-                                    );
-                                  },
-                                ),
-                          // Tab Sudah Selesai
-                          completedTasks.isEmpty
-                              ? const Center(
-                                  child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Image(
-                                      image:
-                                          AssetImage('assets/images/Empty.png'),
-                                      width: 350,
-                                      height: 350,
-                                      fit: BoxFit.contain,
-                                    ),
-                                    SizedBox(height: Spacing.md),
-                                    Text(
-                                      'Belum ada tugas yang selesai',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16,
-                                          color: ColorCollection.primary900),
-                                    ),
-                                    SizedBox(height: Spacing.md),
-                                    Text(
-                                      'Checklist tugas kamu buat tandain \nkalau tugas kamu udah selesai',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                          fontSize: 14,
-                                          color: ColorCollection.neutral600),
-                                    ),
-                                  ],
-                                ))
-                              : ListView.builder(
-                                  itemCount: completedTasks.length,
-                                  itemBuilder: (context, index) {
-                                    return TugasCard(
-                                      task: completedTasks[index],
-                                      onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) => DetailTugas(
-                                                task: completedTasks[index]),
-                                          ),
-                                        );
-                                      },
-                                      trailing: IconButton(
-                                        icon: const Icon(Icons.check_box,
-                                            color: ColorCollection.accentGreen),
-                                        onPressed: () {
-                                          _markAsIncomplete(
-                                              completedTasks[index]);
-                                        },
-                                      ),
-                                    );
-                                  },
-                                ),
+                          _buildTaskList(widget.tasks, isCompleted: false),
+                          _buildTaskList(widget.completedTasks,
+                              isCompleted: true),
                         ],
                       ),
                     ),
@@ -205,11 +91,129 @@ class _TugaskuState extends State<Tugasku> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        shape: const CircleBorder(),
-        onPressed: () {},
+        onPressed: () {
+          showDialog(
+            context: context,
+            builder: (context) {
+              return CustomAlert(
+                onAddTask: widget.addTask,
+                categories: [
+                  'Semua',
+                  'Tugas Kuliah',
+                  'Pribadi',
+                  'Kerja',
+                  'Hobi',
+                  'Olahraga',
+                ],
+              );
+            },
+          );
+        },
         backgroundColor: ColorCollection.primary900,
         child: const Icon(Icons.add, color: ColorCollection.primary100),
       ),
+    );
+  }
+
+  Widget _buildTaskList(List<Map<String, String>> taskList,
+      {required bool isCompleted}) {
+    if (taskList.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset(
+              './assets/images/Empty.png',
+              width: 300,
+              height: 300,
+              fit: BoxFit.contain,
+            ),
+            const SizedBox(height: 16),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  isCompleted
+                      ? 'Belum ada tugas yang selesai'
+                      : 'Buat yuk! Masih kosong nih',
+                  style: const TextStyle(
+                      fontSize: 16,
+                      color: ColorCollection.primary900,
+                      fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(
+                  height: 8,
+                ),
+                Flexible(
+                  child: Text(
+                    isCompleted
+                        ? 'Checklist tugas kamu buat tandain kalau tugas kamu sudah selesai'
+                        : 'Belum ada tugas buat kamu sekarang',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: ColorCollection.neutral600,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      itemCount: taskList.length,
+      itemBuilder: (context, index) {
+        final task = taskList[index];
+        return TugasCard(
+          task: task,
+          onTap: () async {
+            final result = await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => DetailTugas(
+                  task: task,
+                  onTaskUpdated: (updatedTask) {
+                    setState(() {
+                      taskList[index] = updatedTask;
+                    });
+                  },
+                  onTaskDeleted: () {
+                    setState(() {
+                      taskList.removeAt(index);
+                    });
+                  },
+                  onTaskCompleted: () {
+                    setState(() {
+                      taskList.removeAt(index);
+                      widget.markAsCompleted(task);
+                    });
+                  },
+                ),
+              ),
+            );
+
+            if (result is bool && result) {
+              setState(() {}); // Refresh state
+            }
+          },
+          trailing: IconButton(
+            icon: Icon(
+              isCompleted ? Icons.check_box : Icons.check_box_outline_blank,
+              color: isCompleted ? Colors.green : ColorCollection.neutral500,
+            ),
+            onPressed: () {
+              isCompleted
+                  ? widget.markAsIncomplete(task)
+                  : widget.markAsCompleted(task);
+            },
+          ),
+        );
+      },
     );
   }
 }

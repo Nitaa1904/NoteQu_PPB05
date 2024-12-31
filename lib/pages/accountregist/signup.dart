@@ -1,42 +1,31 @@
-import 'package:firebase_auth/firebase_auth.dart';
+// import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:notequ/design_system/styles/color.dart';
 import 'package:notequ/design_system/widget/field/input_field.dart';
 import 'package:notequ/pages/accountregist/login.dart';
 import 'package:notequ/pages/tugasku/home.dart';
+// import 'package:notequ/services/auth_service.dart';
 
-class SignUpPage extends StatelessWidget {
+class SignUpPage extends StatefulWidget {
   SignUpPage({super.key});
 
-  final TextEditingController nameController = TextEditingController();
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
+  @override
+  State<SignUpPage> createState() => _SignUpPageState();
+}
 
-  // Fungsi untuk login dengan Google
-  Future<void> signInWithGoogle(BuildContext context) async {
-    try {
-      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-      if (googleUser != null) {
-        final GoogleSignInAuthentication googleAuth =
-            await googleUser.authentication;
-        final credential = GoogleAuthProvider.credential(
-          accessToken: googleAuth.accessToken,
-          idToken: googleAuth.idToken,
-        );
-        await FirebaseAuth.instance.signInWithCredential(credential);
+class _SignUpPageState extends State<SignUpPage> {
+  // final AuthService _authService = AuthService();
 
-        // Navigasi ke Homepage setelah login berhasil
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const Homepage()),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Login dengan Google gagal: $e")),
-      );
-    }
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 
   @override
@@ -83,18 +72,18 @@ class SignUpPage extends StatelessWidget {
                   children: [
                     InputField(
                       hintText: "Masukkan Nama",
-                      controller: nameController,
+                      controller: _nameController,
                     ),
                     const SizedBox(height: 12),
                     InputField(
                       hintText: "Masukkan Email",
-                      controller: emailController,
+                      controller: _emailController,
                     ),
                     const SizedBox(height: 12),
                     InputField(
                       obscureText: true,
                       hintText: "Buat Password",
-                      controller: passwordController,
+                      controller: _passwordController,
                     ),
                     const SizedBox(height: 24),
                     // Tombol utama
@@ -102,7 +91,7 @@ class SignUpPage extends StatelessWidget {
                       width: double.infinity,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 20),
+                          padding: const EdgeInsets.symmetric(vertical: 24),
                           backgroundColor: ColorCollection.primary900,
                           foregroundColor: ColorCollection.primary100,
                           shape: RoundedRectangleBorder(
@@ -147,16 +136,18 @@ class SignUpPage extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: () => signInWithGoogle(context),
-                  // icon: Image.asset(
-                  //   'assets/images/icon_google.png',
-                  // ),
+                  onPressed: () {},
+                  icon: Image.asset(
+                    '../assets/images/icon-google.png',
+                    width: 24,
+                    height: 24,
+                  ),
                   label: const Text(
                     "Masuk dengan Google",
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    padding: const EdgeInsets.symmetric(vertical: 24),
                     backgroundColor: ColorCollection.primary100,
                     foregroundColor: ColorCollection.primary900,
                     shape: RoundedRectangleBorder(
@@ -201,4 +192,24 @@ class SignUpPage extends StatelessWidget {
       ),
     );
   }
+
+  // void _SignUp() async {
+  //   String name = _nameController.text;
+  //   String email = _emailController.text;
+  //   String password = _passwordController.text;
+
+  //   User? user = await _authService.signUpWithEmailAndPassword(email, password);
+
+  //   if (user != null) {
+  //     Navigator.pushReplacement(
+  //       context,
+  //       MaterialPageRoute(
+  //         builder: (context) => Homepage(),
+  //       ),
+  //     );
+  //   } else {
+  //     ScaffoldMessenger.of(context)
+  //         .showSnackBar(SnackBar(content: Text('Gagal Membuat Akun')));
+  //   }
+  // }
 }
