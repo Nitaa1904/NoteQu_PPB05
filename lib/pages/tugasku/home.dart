@@ -25,6 +25,8 @@ class _HomepageState extends State<Homepage> {
     'Olahraga',
   ];
 
+  final List<int> tasksCompletionData = [3, 5, 4, 6, 2, 7, 8]; // Dummy data
+
   void _addTask(Map<String, String> newTask) {
     setState(() {
       tasks.add(newTask);
@@ -50,6 +52,8 @@ class _HomepageState extends State<Homepage> {
     setState(() {
       tasks.remove(task);
       completedTasks.add(task);
+      if (tasksCompletionData.length >= 7) tasksCompletionData.removeAt(0);
+      tasksCompletionData.add(completedTasks.length);
     });
   }
 
@@ -57,6 +61,8 @@ class _HomepageState extends State<Homepage> {
     setState(() {
       completedTasks.remove(task);
       tasks.add(task);
+      if (tasksCompletionData.length >= 7) tasksCompletionData.removeAt(0);
+      tasksCompletionData.add(completedTasks.length);
     });
   }
 
@@ -83,6 +89,7 @@ class _HomepageState extends State<Homepage> {
         profil: Profil(
           completedTasks: completedTasks.length,
           pendingTasks: tasks.length,
+          tasksCompletionData: tasksCompletionData,
         ),
       ),
     );

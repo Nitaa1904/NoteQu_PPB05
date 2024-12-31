@@ -1,16 +1,74 @@
 import 'package:flutter/material.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:notequ/design_system/styles/color.dart';
 import 'package:notequ/pages/accountregist/signup.dart';
 
-class Profil extends StatelessWidget {
+class Profil extends StatefulWidget {
   final int completedTasks;
   final int pendingTasks;
+  final List<int> tasksCompletionData;
 
   const Profil({
     super.key,
     required this.completedTasks,
     required this.pendingTasks,
+    required this.tasksCompletionData,
   });
+
+  @override
+  State<Profil> createState() => _ProfilState();
+}
+
+class _ProfilState extends State<Profil> {
+  String name = "Budiono Siregar";
+  String email = "budi123@gmail.com";
+
+  void _editProfile() {
+    final TextEditingController nameController =
+        TextEditingController(text: name);
+    final TextEditingController emailController =
+        TextEditingController(text: email);
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Edit Profil"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(labelText: "Nama"),
+              ),
+              TextField(
+                controller: emailController,
+                decoration: const InputDecoration(labelText: "Email"),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text("Batal"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  name = nameController.text;
+                  email = emailController.text;
+                });
+                Navigator.of(context).pop();
+              },
+              child: const Text("Simpan"),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +87,7 @@ class Profil extends StatelessWidget {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Bagian header dengan background full width
+            // Bagian header
             Container(
               width: double.infinity,
               color: ColorCollection.primary900,
@@ -41,25 +99,23 @@ class Profil extends StatelessWidget {
                     backgroundImage: AssetImage('assets/images/profile.jpeg'),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
-                    "Budiono Siregar",
-                    style: TextStyle(
+                  Text(
+                    name,
+                    style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: ColorCollection.primary100,
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    "budi123@gmail.com",
-                    style: TextStyle(
+                  Text(
+                    email,
+                    style: const TextStyle(
                         fontSize: 14, color: ColorCollection.neutral500),
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
-                    onPressed: () {
-                      // Tambahkan logika edit profil
-                    },
+                    onPressed: _editProfile,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: ColorCollection.primary100,
                       foregroundColor: ColorCollection.primary900,
@@ -94,8 +150,8 @@ class Profil extends StatelessWidget {
                     children: [
                       _buildSummaryCard(
                         "Tugas Selesai",
-                        completedTasks.toString(),
-                        "dari ${(completedTasks + pendingTasks).toString()}",
+                        widget.completedTasks.toString(),
+                        "dari ${(widget.completedTasks + widget.pendingTasks).toString()}",
                         ColorCollection.primary900,
                       ),
                       const SizedBox(
@@ -103,7 +159,7 @@ class Profil extends StatelessWidget {
                       ),
                       _buildSummaryCard(
                         "Tugas Tertunda",
-                        pendingTasks.toString(),
+                        widget.pendingTasks.toString(),
                         "",
                         ColorCollection.primary900,
                       ),
@@ -111,7 +167,7 @@ class Profil extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
                   const Text(
-                    "Grafik Penyelesaian Tugas",
+                    "Grafik Penyelesaian Tugas (7 Hari Terakhir)",
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -120,25 +176,20 @@ class Profil extends StatelessWidget {
                   const SizedBox(height: 8),
                   Container(
                     height: 200,
-                    decoration: BoxDecoration(
-                      color: ColorCollection.neutral200,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                    color: ColorCollection.primary100,
                     child: Center(
-                      child: completedTasks > 0
+                      child: widget.completedTasks > 0
                           ? Text(
-                              "${((completedTasks / (completedTasks + pendingTasks)) * 100).toStringAsFixed(1)}% Tugas Selesai",
+                              "${((widget.completedTasks / (widget.completedTasks + widget.pendingTasks)) * 100).toStringAsFixed(1)}% Tugas Selesai",
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                color: ColorCollection.accentGreen,
+                                color: Colors.green,
                               ),
                             )
                           : const Text(
                               "Belum ada tugas selesai",
-                              style: TextStyle(
-                                  color: ColorCollection.neutral600,
-                                  fontSize: 16),
+                              style: TextStyle(color: Colors.grey),
                             ),
                     ),
                   ),
@@ -148,11 +199,11 @@ class Profil extends StatelessWidget {
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () {
-                        // Tambahkan logika logout
                         Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
-                                builder: (context) => SignUpPage()));
+                                builder: (context) =>
+                                    SignUpPage())); // Hapus keyword const
                       },
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 24),
