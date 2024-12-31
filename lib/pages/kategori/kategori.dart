@@ -95,7 +95,6 @@ class _KategoriState extends State<Kategori> {
         title: const Text(
           "Kategori",
           style: TextStyle(
-            fontSize: 24,
             fontWeight: FontWeight.bold,
             color: ColorCollection.primary900,
           ),
@@ -120,7 +119,7 @@ class _KategoriState extends State<Kategori> {
                       itemBuilder: (context, index) {
                         return Padding(
                           padding: const EdgeInsets.only(right: 12.0),
-                          child: ChoiceChip(
+                          child: RawChip(
                             label: Text(
                               categories[index],
                               style: TextStyle(
@@ -129,6 +128,7 @@ class _KategoriState extends State<Kategori> {
                                     : ColorCollection.primary900,
                               ),
                             ),
+                            showCheckmark: false,
                             selected: selectedCategory == categories[index],
                             onSelected: (isSelected) {
                               setState(() {
@@ -154,15 +154,33 @@ class _KategoriState extends State<Kategori> {
             Expanded(
               child: filteredTasks.isEmpty
                   ? Center(
-                      child: Text(
-                        selectedCategory == 'Semua'
-                            ? "Tidak ada tugas yang tersedia."
-                            : "Tidak ada tugas untuk kategori \"$selectedCategory\".",
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: ColorCollection.neutral600,
-                        ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Image.asset(
+                            '../assets/images/kategori.png',
+                            width: 400,
+                            height: 400,
+                          ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'Belum ada tugas nih',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: ColorCollection.primary900),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            selectedCategory == 'Semua'
+                                ? "Belum ada tugas buat kamu sekarang"
+                                : "Belum ada tugas buat kategori \"$selectedCategory\"",
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: ColorCollection.neutral600,
+                            ),
+                          ),
+                        ],
                       ),
                     )
                   : ListView.builder(

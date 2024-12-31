@@ -45,9 +45,16 @@ class _KalenderState extends State<Kalender> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Kalender'),
-        backgroundColor: ColorCollection.primary900,
+        title: const Text(
+          'Kalender',
+          style: TextStyle(
+              fontWeight: FontWeight.bold, color: ColorCollection.primary900),
+        ),
+        elevation: 4.0,
+        shadowColor: ColorCollection.primary900.withOpacity(0.3),
+        backgroundColor: ColorCollection.primary100,
       ),
+      backgroundColor: ColorCollection.primary100,
       body: Column(
         children: [
           TableCalendar(
@@ -61,7 +68,7 @@ class _KalenderState extends State<Kalender> {
                 _focusedDay = focusedDay;
               });
             },
-            calendarStyle: CalendarStyle(
+            calendarStyle: const CalendarStyle(
               todayDecoration: BoxDecoration(
                 color: ColorCollection.primary900,
                 shape: BoxShape.circle,
@@ -75,11 +82,24 @@ class _KalenderState extends State<Kalender> {
           const SizedBox(height: 16),
           Expanded(
             child: selectedTasks.isEmpty
-                ? const Center(
-                    child: Text(
-                      'Tidak ada tugas pada tanggal ini.',
-                      style: TextStyle(
-                          fontSize: 16, color: ColorCollection.neutral600),
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Image.asset(
+                          '../assets/images/kalender.png',
+                          width: 300,
+                          height: 300,
+                        ),
+                        const SizedBox(
+                          height: 16,
+                        ),
+                        const Text(
+                          'Belum ada tugas di tanggal ini',
+                          style: TextStyle(
+                              fontSize: 16, color: ColorCollection.neutral600),
+                        ),
+                      ],
                     ),
                   )
                 : ListView.builder(

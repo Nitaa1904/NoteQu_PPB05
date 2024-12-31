@@ -43,11 +43,14 @@ class _TugaskuState extends State<Tugasku> {
                 color: ColorCollection.primary900,
               ),
             ),
+            const SizedBox(
+              height: 8,
+            ),
             const Text(
               'Mau buat tugas apa hari ini?',
-              style: TextStyle(fontSize: 14, color: ColorCollection.neutral600),
+              style: TextStyle(fontSize: 16, color: ColorCollection.neutral600),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 24),
             Expanded(
               child: DefaultTabController(
                 length: 2,
@@ -64,7 +67,9 @@ class _TugaskuState extends State<Tugasku> {
                         ),
                       ),
                       tabs: [
-                        Tab(text: 'Tugas Mendatang'),
+                        Tab(
+                          text: 'Tugas Mendatang',
+                        ),
                         Tab(text: 'Sudah Selesai'),
                       ],
                     ),
@@ -98,7 +103,6 @@ class _TugaskuState extends State<Tugasku> {
                   'Pribadi',
                   'Kerja',
                   'Hobi',
-                  'Esport',
                   'Olahraga',
                 ],
               );
@@ -120,18 +124,41 @@ class _TugaskuState extends State<Tugasku> {
           children: [
             Image.asset(
               './assets/images/Empty.png',
-              width: 150,
-              height: 150,
+              width: 300,
+              height: 300,
               fit: BoxFit.contain,
             ),
             const SizedBox(height: 16),
-            Text(
-              isCompleted
-                  ? 'Belum ada tugas yang selesai.'
-                  : 'Tidak ada tugas mendatang.',
-              style: const TextStyle(
-                  fontSize: 16, color: ColorCollection.neutral600),
-              textAlign: TextAlign.center,
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  isCompleted
+                      ? 'Belum ada tugas yang selesai'
+                      : 'Buat yuk! Masih kosong nih',
+                  style: const TextStyle(
+                      fontSize: 16,
+                      color: ColorCollection.primary900,
+                      fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(
+                  height: 8,
+                ),
+                Flexible(
+                  child: Text(
+                    isCompleted
+                        ? 'Checklist tugas kamu buat tandain kalau tugas kamu sudah selesai'
+                        : 'Belum ada tugas buat kamu sekarang',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: ColorCollection.neutral600,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
             ),
           ],
         ),

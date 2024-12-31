@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:notequ/design_system/styles/color.dart';
 import 'package:timezone/timezone.dart' as tz;
 
 class CustomAlert extends StatefulWidget {
@@ -73,6 +74,7 @@ class _CustomAlertState extends State<CustomAlert> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
+      backgroundColor: ColorCollection.primary100,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16.0),
       ),
@@ -88,13 +90,14 @@ class _CustomAlertState extends State<CustomAlert> {
               controller: _taskController,
               decoration: InputDecoration(
                 hintText: 'Masukkan judul tugas',
+                focusColor: ColorCollection.primary900,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8.0),
                 ),
               ),
             ),
             const SizedBox(height: 16),
-            Text(
+            const Text(
               'Pilih Kategori',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
@@ -103,11 +106,20 @@ class _CustomAlertState extends State<CustomAlert> {
               spacing: 8.0,
               runSpacing: 8.0,
               children: widget.categories.map((category) {
-                return ChoiceChip(
-                  label: Text(category),
+                return RawChip(
+                  label: Text(
+                    category,
+                    style: TextStyle(
+                        color: selectedCategory == category
+                            ? ColorCollection.primary100
+                            : ColorCollection.primary900),
+                  ),
                   selected: selectedCategory == category,
-                  selectedColor: Colors.blue.shade100,
-                  backgroundColor: Colors.grey.shade200,
+                  selectedColor: ColorCollection.primary900,
+                  backgroundColor: ColorCollection.primary100,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.0)),
+                  showCheckmark: false,
                   onSelected: (isSelected) {
                     if (isSelected) {
                       setState(() {
@@ -136,7 +148,7 @@ class _CustomAlertState extends State<CustomAlert> {
               },
               decoration: InputDecoration(
                 hintText: selectedDate != null
-                    ? DateFormat('yyyy-MM-dd').format(selectedDate!)
+                    ? DateFormat('dd-MM-yyyy').format(selectedDate!)
                     : 'Pilih tanggal buat tugas kamu',
                 suffixIcon: const Icon(Icons.calendar_today),
                 border: OutlineInputBorder(
@@ -169,7 +181,7 @@ class _CustomAlertState extends State<CustomAlert> {
               ),
             ),
             const SizedBox(height: 16),
-            Text(
+            const Text(
               'Pengingat',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
@@ -177,12 +189,19 @@ class _CustomAlertState extends State<CustomAlert> {
             Wrap(
               spacing: 8.0,
               runSpacing: 8.0,
-              children: [5, 10, 15, 30].map((minute) {
-                return ChoiceChip(
-                  label: Text('$minute menit sebelumnya'),
+              children: [5, 10, 15, 30, 60].map((minute) {
+                return RawChip(
+                  label: Text(
+                    '$minute menit sebelumnya',
+                    style: TextStyle(
+                        color: selectedReminder == minute
+                            ? ColorCollection.primary100
+                            : ColorCollection.primary900),
+                  ),
                   selected: selectedReminder == minute,
-                  selectedColor: Colors.blue.shade100,
-                  backgroundColor: Colors.grey.shade200,
+                  selectedColor: ColorCollection.primary900,
+                  backgroundColor: ColorCollection.primary100,
+                  showCheckmark: false,
                   onSelected: (isSelected) {
                     setState(() {
                       selectedReminder = isSelected ? minute : null;
@@ -198,7 +217,6 @@ class _CustomAlertState extends State<CustomAlert> {
                 const Text(
                   'Catatan',
                   style: TextStyle(
-                    fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -223,9 +241,15 @@ class _CustomAlertState extends State<CustomAlert> {
           onPressed: () {
             Navigator.of(context).pop();
           },
-          child: const Text('Batal'),
+          child: const Text(
+            'Batal',
+            style: TextStyle(
+                fontSize: 16,
+                color: ColorCollection.neutral600,
+                fontWeight: FontWeight.bold),
+          ),
         ),
-        ElevatedButton(
+        TextButton(
           onPressed: () {
             if (_taskController.text.isNotEmpty) {
               final now = DateTime.now();
@@ -259,7 +283,7 @@ class _CustomAlertState extends State<CustomAlert> {
                 'title': _taskController.text,
                 'category': selectedCategory,
                 'date': selectedDate != null
-                    ? DateFormat('yyyy-MM-dd').format(selectedDate!)
+                    ? DateFormat('dd-MM-yyyy').format(selectedDate!)
                     : 'No Date',
                 'time': selectedTime != null
                     ? selectedTime!.format(context)
@@ -274,7 +298,13 @@ class _CustomAlertState extends State<CustomAlert> {
               Navigator.of(context).pop();
             }
           },
-          child: const Text('Selesai'),
+          child: const Text(
+            'Selesai',
+            style: TextStyle(
+                fontSize: 16,
+                color: ColorCollection.primary900,
+                fontWeight: FontWeight.bold),
+          ),
         ),
       ],
     );
