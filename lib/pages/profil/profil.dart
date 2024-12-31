@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:notequ/design_system/styles/color.dart';
 
 class Profil extends StatelessWidget {
   final int completedTasks;
   final int pendingTasks;
+  final List<int> tasksCompletionData;
 
   const Profil({
     super.key,
     required this.completedTasks,
     required this.pendingTasks,
+    required this.tasksCompletionData,
   });
 
   @override
@@ -27,7 +30,7 @@ class Profil extends StatelessWidget {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Bagian header dengan background full width
+            // Bagian header
             Container(
               width: double.infinity,
               color: Colors.black,
@@ -105,7 +108,7 @@ class Profil extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
                   const Text(
-                    "Grafik Penyelesaian Tugas",
+                    "Grafik Penyelesaian Tugas (7 Hari Terakhir)",
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -114,22 +117,20 @@ class Profil extends StatelessWidget {
                   const SizedBox(height: 8),
                   Container(
                     height: 200,
-                    color: ColorCollection.primary100,
-                    child: Center(
-                      child: completedTasks > 0
-                          ? Text(
-                              "${((completedTasks / (completedTasks + pendingTasks)) * 100).toStringAsFixed(1)}% Tugas Selesai",
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.green,
-                              ),
-                            )
-                          : const Text(
-                              "Belum ada tugas selesai",
-                              style: TextStyle(color: Colors.grey),
-                            ),
+                    decoration: BoxDecoration(
+                      color: ColorCollection.primary100.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(12),
                     ),
+                    child: tasksCompletionData.length >= 7
+                        ? LineChart(
+                            _buildLineChartData(),
+                          )
+                        : const Center(
+                            child: Text(
+                              "Data tidak cukup untuk grafik",
+                              style: TextStyle(color: Colors.red),
+                            ),
+                          ),
                   ),
                 ],
               ),
@@ -173,6 +174,40 @@ class Profil extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  LineChartData _buildLineChartData() {
+    return LineChartData(
+      gridData: FlGridData(show: true),
+      titlesData: FlTitlesData(
+        leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true)),
+        bottomTitles: AxisTitles(
+          sideTitles: SideTitles(
+            showTitles: true,
+            getTitlesWidget: (value, meta) {
+              const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+              if (value.toInt() < 0 || value.toInt() >= days.length) {
+                return const Text('');
+              }
+              return Text(days[value.toInt()]);
+            },
+          ),
+        ),
+      ),
+      borderData: FlBorderData(show: true),
+      lineBarsData: [
+        LineChartBarData(
+          isCurved: true,
+          spots: List.generate(
+            tasksCompletionData.length,
+            (index) =>
+                FlSpot(index.toDouble(), tasksCompletionData[index].toDouble()),
+          ),
+          color: ColorCollection.primary900,
+          barWidth: 3,
+        ),
+      ],
     );
   }
 }
