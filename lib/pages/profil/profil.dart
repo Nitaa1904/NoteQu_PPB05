@@ -20,7 +20,47 @@ class Profil extends StatefulWidget {
 class _ProfilState extends State<Profil> {
   String name = "Budiono Siregar";
   String email = "budi123@gmail.com";
+  Map<String, dynamic>? userProfile;
 
+  @override
+  void initState() {
+    super.initState();
+    _loadUserProfile();
+  }
+
+  // Fungsi untuk memuat data profil dari API
+  Future<void> _loadUserProfile() async {
+    try {
+      const String userId = "your_user_id"; // Ganti dengan ID pengguna Anda
+      final profile = await fetchUserProfile(userId);
+      setState(() {
+        userProfile = profile;
+        name = profile['name'] ?? "Nama Tidak Diketahui";
+        email = profile['email'] ?? "Email Tidak Diketahui";
+      });
+    } catch (e) {
+      print("Error loading user profile: $e");
+    }
+  }
+
+  // Fungsi untuk memperbarui profil
+  Future<void> _updateUserProfile() async {
+    try {
+      const String userId = "your_user_id"; // Ganti dengan ID pengguna Anda
+      final updates = {'name': name, 'email': email};
+      await updateUserProfile(userId, updates);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Profil berhasil diperbarui")),
+      );
+    } catch (e) {
+      print("Error updating user profile: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Gagal memperbarui profil")),
+      );
+    }
+  }
+
+  // Fungsi untuk menampilkan dialog Edit Profil
   void _editProfile() {
     final TextEditingController nameController =
         TextEditingController(text: name);
@@ -53,12 +93,21 @@ class _ProfilState extends State<Profil> {
               child: const Text("Batal"),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
+                if (nameController.text.trim().isEmpty ||
+                    emailController.text.trim().isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text("Nama dan email tidak boleh kosong")),
+                  );
+                  return;
+                }
                 setState(() {
                   name = nameController.text;
                   email = emailController.text;
                 });
                 Navigator.of(context).pop();
+                await _updateUserProfile();
               },
               child: const Text("Simpan"),
             ),
@@ -70,6 +119,10 @@ class _ProfilState extends State<Profil> {
 
   @override
   Widget build(BuildContext context) {
+    if (userProfile == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -179,9 +232,6 @@ class _ProfilState extends State<Profil> {
                       BarChartData(
                         barGroups: _generateTaskCompletionData(),
                         titlesData: FlTitlesData(
-                          leftTitles: AxisTitles(),
-                          rightTitles: AxisTitles(),
-                          topTitles: AxisTitles(),
                           bottomTitles: AxisTitles(
                             sideTitles: SideTitles(
                               showTitles: true,
@@ -226,8 +276,6 @@ class _ProfilState extends State<Profil> {
                   ),
                   const SizedBox(height: 40),
                   Center(
-                      child: SizedBox(
-                    width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () {
                         Navigator.pushReplacement(
@@ -244,10 +292,8 @@ class _ProfilState extends State<Profil> {
                       ),
                       child: const Text("Logout"),
                     ),
-                  )),
-                  const SizedBox(
-                    height: 24,
                   ),
+                  const SizedBox(height: 24),
                   const Center(
                     child: Text(
                       'versi 1.0.0',
@@ -265,7 +311,6 @@ class _ProfilState extends State<Profil> {
   }
 
   List<BarChartGroupData> _generateTaskCompletionData() {
-    // Distribute completed tasks over the last 7 days
     List<int> dailyTasks = List.filled(7, 0);
     int remainingTasks = widget.completedTasks;
 
@@ -282,9 +327,9 @@ class _ProfilState extends State<Profil> {
               barRods: [
                 BarChartRodData(
                   toY: entry.value.toDouble(),
-                  color: Colors.blue,
-                  width: 16,
-                ),
+                  color: ColorCollection.primary900,
+                  width: 15,
+                )
               ],
             ))
         .toList();
@@ -294,19 +339,30 @@ class _ProfilState extends State<Profil> {
       String title, String value, String subtitle, Color color) {
     return Expanded(
       child: Container(
-        height: 130,
+        padding: const EdgeInsets.all(16.0),
         decoration: BoxDecoration(
-          color: ColorCollection.neutral200,
-          borderRadius: BorderRadius.circular(12),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.1),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Text(
+              title,
+              style: TextStyle(fontSize: 14, color: color),
+            ),
+            const SizedBox(height: 8),
             Text(
               value,
               style: TextStyle(
-                fontSize: 32,
+                fontSize: 24,
                 fontWeight: FontWeight.bold,
                 color: color,
               ),
@@ -315,16 +371,26 @@ class _ProfilState extends State<Profil> {
               Text(
                 subtitle,
                 style: const TextStyle(
-                    fontSize: 14, color: ColorCollection.neutral600),
+                    fontSize: 10, color: ColorCollection.neutral600),
               ),
-            const SizedBox(height: 8),
-            Text(
-              title,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-            ),
           ],
         ),
       ),
     );
   }
+}
+
+// Ganti fungsi-fungsi ini dengan implementasi nyata untuk memanggil API Anda
+Future<Map<String, dynamic>> fetchUserProfile(String userId) async {
+  // Simulasi data. Ganti dengan API asli.
+  return Future.delayed(
+    const Duration(seconds: 1),
+    () => {'name': 'Budiono Siregar', 'email': 'budi123@gmail.com'},
+  );
+}
+
+Future<void> updateUserProfile(
+    String userId, Map<String, dynamic> updates) async {
+  // Simulasi pembaruan. Ganti dengan API asli.
+  await Future.delayed(const Duration(seconds: 1));
 }

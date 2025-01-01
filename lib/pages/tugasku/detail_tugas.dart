@@ -4,9 +4,9 @@ import 'package:notequ/design_system/styles/color.dart';
 
 class DetailTugas extends StatefulWidget {
   final Map<String, String> task;
-  final void Function(Map<String, String>) onTaskUpdated;
-  final void Function() onTaskDeleted;
-  final void Function() onTaskCompleted;
+  final Future<void> Function(Map<String, String> updatedTask) onTaskUpdated;
+  final Future<void> Function() onTaskDeleted;
+  final Future<void> Function() onTaskCompleted;
 
   const DetailTugas({
     Key? key,
@@ -23,7 +23,8 @@ class DetailTugas extends StatefulWidget {
 class _DetailTugasState extends State<DetailTugas> {
   void _editTask() {
     final _taskController = TextEditingController(text: widget.task['title']);
-    final _noteController = TextEditingController(text: widget.task['note']);
+    final _noteController =
+        TextEditingController(text: widget.task['description']);
     DateTime? selectedDate = widget.task['date'] != null
         ? DateFormat('yyyy-MM-dd').parse(widget.task['date']!)
         : null;
@@ -43,10 +44,8 @@ class _DetailTugasState extends State<DetailTugas> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16.0),
               ),
-              title: const Text(
-                'Edit Tugas',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-              ),
+              title: const Text('Edit Tugas',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
               content: SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -61,10 +60,8 @@ class _DetailTugasState extends State<DetailTugas> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    Text(
-                      'Pilih Kategori',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
+                    Text('Pilih Kategori',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 8.0,
@@ -114,51 +111,14 @@ class _DetailTugasState extends State<DetailTugas> {
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
-                      readOnly: true,
-                      onTap: () async {
-                        TimeOfDay? pickedTime = await showTimePicker(
-                          context: context,
-                          initialTime: selectedTime ?? TimeOfDay.now(),
-                        );
-                        if (pickedTime != null) {
-                          setState(() {
-                            selectedTime = pickedTime;
-                          });
-                        }
-                      },
+                      controller: _noteController,
+                      maxLines: 3,
                       decoration: InputDecoration(
-                        hintText: selectedTime != null
-                            ? selectedTime!.format(context)
-                            : 'Pilih waktu buat tugas kamu',
-                        suffixIcon: const Icon(Icons.access_time),
+                        hintText: 'Tambahkan catatan untuk tugas ini',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8.0),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Catatan',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        TextFormField(
-                          controller: _noteController,
-                          maxLines: 3,
-                          decoration: InputDecoration(
-                            hintText: 'Tambahkan catatan untuk tugas ini',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                            ),
-                          ),
-                        ),
-                      ],
                     ),
                   ],
                 ),
@@ -171,30 +131,21 @@ class _DetailTugasState extends State<DetailTugas> {
                   child: const Text('Batal'),
                 ),
                 ElevatedButton(
-                  onPressed: () {
-                    // Pastikan waktu valid sebelum diolah
-                    if (selectedTime != null) {
-                      final formattedTime = TimeOfDay(
-                          hour: selectedTime!.hour,
-                          minute: selectedTime!.minute);
+                  onPressed: () async {
+                    final updates = {
+                      'title': _taskController.text,
+                      'category': selectedCategory,
+                      'date': selectedDate != null
+                          ? DateFormat('yyyy-MM-dd').format(selectedDate!)
+                          : '',
+                      'note': _noteController.text,
+                    };
 
-                      widget.onTaskUpdated({
-                        'title': _taskController.text,
-                        'category': selectedCategory,
-                        'date': selectedDate != null
-                            ? DateFormat('yyyy-MM-dd').format(selectedDate!)
-                            : 'Tanggal belum dipilih',
-                        'time':
-                            '${formattedTime.hour}:${formattedTime.minute.toString().padLeft(2, '0')}',
-                        'note': _noteController.text.isNotEmpty
-                            ? _noteController.text
-                            : 'Tidak ada catatan',
-                      });
-                      Navigator.of(context).pop();
-                    } else {
-                      print(
-                          "Waktu pengingat tidak valid."); // Tambahkan log jika waktu tidak valid
-                    }
+                    await widget.onTaskUpdated({
+                      ...widget.task,
+                      ...updates,
+                    });
+                    Navigator.of(context).pop();
                   },
                   child: const Text('Simpan'),
                 ),
@@ -206,255 +157,29 @@ class _DetailTugasState extends State<DetailTugas> {
     );
   }
 
-  void _showDeleteConfirmationDialog() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: ColorCollection.primary100,
-          title: Column(
-            children: [
-              Image.asset(
-                '../assets/images/hapus-tugas.png',
-                width: 200,
-                height: 200,
-              ),
-              const Text(
-                'Hapus Tugas?',
-                style: TextStyle(
-                    color: ColorCollection.primary900,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-          content: const Text(
-            'Kamu yakin mau menghapus tugas ini?',
-            style: TextStyle(
-              color: ColorCollection.neutral600,
-              fontSize: 16,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                widget.onTaskDeleted();
-                Navigator.of(context).pop(); // Tutup dialog
-                Navigator.pop(context, true); // Kembali ke halaman sebelumnya
-              },
-              child: const Text(
-                'Ya',
-                style: TextStyle(
-                    color: ColorCollection.accentRed,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16),
-              ),
-            ),
-            const SizedBox(width: 2),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Tutup dialog
-              },
-              child: const Text(
-                'Batal',
-                style: TextStyle(
-                    color: ColorCollection.neutral800,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16),
-              ),
-            ),
-          ],
-        );
-      },
-    );
+  void _deleteTask() async {
+    await widget.onTaskDeleted();
+    Navigator.pop(context, true);
+  }
+
+  void _completeTask() async {
+    await widget.onTaskCompleted();
+    Navigator.pop(context, true);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        // centerTitle: true,
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Detail Tugasku',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-                color: ColorCollection.primary900,
-              ),
-            ),
-            IconButton(
-                onPressed: _showDeleteConfirmationDialog,
-                icon: const Icon(
-                  Icons.delete,
-                  color: ColorCollection.accentRed,
-                ))
-          ],
-        ),
-        backgroundColor: ColorCollection.primary100,
-        foregroundColor: ColorCollection.primary900,
-        elevation: 4.0,
-        shadowColor: ColorCollection.primary900.withOpacity(0.3),
+        title: const Text('Detail Tugasku'),
       ),
-      backgroundColor: ColorCollection.primary100,
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Kotak 1: Kategori, Judul, Tanggal
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: ColorCollection.primary100,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: ColorCollection.primary900.withOpacity(0.2),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      color: ColorCollection.neutral200, // Warna latar belakang
-                      borderRadius: BorderRadius.circular(12.0), // Border radius
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8.0, // Padding kiri dan kanan
-                      vertical: 4.0, // Padding atas dan bawah
-                    ),
-                    child: Text(
-                      widget.task['category']?.isNotEmpty == true
-                          ? widget.task['category']!
-                          : 'Tidak Ada Kategori',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: ColorCollection.neutral600,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    widget.task['title'] ?? 'Judul tidak tersedia',
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '${widget.task['date'] ?? ''} ${widget.task['time'] != null && widget.task['time']!.isNotEmpty ? '| ${widget.task['time']}' : ''}',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: ColorCollection.neutral600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            // Kotak 2: Catatan
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: ColorCollection.primary100,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: ColorCollection.primary900.withOpacity(0.2),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Catatan',
-                    style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: ColorCollection.primary900),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    widget.task['note'] ?? 'Tidak ada catatan untuk tugas ini.',
-                    style: const TextStyle(
-                        fontSize: 16, color: ColorCollection.neutral700),
-                  ),
-                ],
-              ),
-            ),
-            const Spacer(),
-            // Tombol Aksi
-            Row(
-              children: [
-                Expanded(
-                  child: SizedBox(
-                    height: 48,
-                    child: OutlinedButton(
-                      onPressed: _editTask,
-                      style: OutlinedButton.styleFrom(
-                          side: const BorderSide(
-                              color: ColorCollection.primary900, width: 2),
-                          foregroundColor: ColorCollection.primary900,
-                          backgroundColor: ColorCollection.primary100,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          )),
-                      child: const Text(
-                        'Edit',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: SizedBox(
-                    height: 48,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        widget.onTaskCompleted();
-                        Navigator.pop(context, true);
-                      },
-                      style: ElevatedButton.styleFrom(
-                          foregroundColor: ColorCollection.primary100,
-                          backgroundColor: ColorCollection.primary900,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          )),
-                      child: const Text(
-                        'Tandai Selesai',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+      body: Column(
+        children: [
+          ElevatedButton(onPressed: _editTask, child: const Text('Edit')),
+          ElevatedButton(onPressed: _deleteTask, child: const Text('Hapus')),
+          ElevatedButton(
+              onPressed: _completeTask, child: const Text('Tandai Selesai')),
+        ],
       ),
     );
   }
