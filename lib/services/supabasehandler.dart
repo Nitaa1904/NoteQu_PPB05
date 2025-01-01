@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:supabase/supabase.dart';
 
 class SupabaseHandler {
-  static String supaBaseURL = ""; // Masukkan URL Supabase Anda
-  static String supaBaseKey = ""; // Masukkan Anon Key Supabase Anda
+  static String supaBaseURL =
+      "https://ghvhnzmuhazipuiehckv.supabase.co"; // Masukkan URL Supabase Anda
+  static String supaBaseKey =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdodmhuem11aGF6aXB1aWVoY2t2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU3MTExNjgsImV4cCI6MjA1MTI4NzE2OH0.1MNF_GxLE4hufUc5CO2sssvgE3nXJ5TpsY89iEiBx5o"; // Masukkan Anon Key Supabase Anda
 
   final client = SupabaseClient(supaBaseURL, supaBaseKey);
 
@@ -11,7 +13,7 @@ class SupabaseHandler {
   Future<void> addData(String taskValue, bool statusValue) async {
     try {
       final response = await client.from("todotable").insert({
-        'task': taskValue,
+        'tasks': taskValue,
         'status': statusValue,
       });
 
@@ -32,7 +34,7 @@ class SupabaseHandler {
       final response = await client
           .from("todotable")
           .select()
-          .order('task', ascending: true);
+          .order('tasks', ascending: true);
 
       if (response.hasError) {
         // Tangani error jika ada
