@@ -25,7 +25,8 @@ class _HomepageState extends State<Homepage> {
     'Olahraga',
   ];
 
-  final List<int> tasksCompletionData = [3, 5, 4, 6, 2, 7, 8]; // Dummy data
+  // Dummy data untuk visualisasi penyelesaian tugas selama 7 hari terakhir
+  final List<int> tasksCompletionData = [3, 5, 4, 6, 2, 7, 8];
 
   void _addTask(Map<String, String> newTask) {
     setState(() {
@@ -89,7 +90,7 @@ class _HomepageState extends State<Homepage> {
         profil: Profil(
           completedTasks: completedTasks.length,
           pendingTasks: tasks.length,
-          tasksCompletionData: tasksCompletionData,
+          // tasksCompletionData: List<int>.from(tasksCompletionData),
         ),
       ),
     );

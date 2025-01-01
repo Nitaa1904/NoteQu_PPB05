@@ -6,13 +6,11 @@ import 'package:notequ/pages/accountregist/signup.dart';
 class Profil extends StatefulWidget {
   final int completedTasks;
   final int pendingTasks;
-  final List<int> tasksCompletionData;
 
   const Profil({
     super.key,
     required this.completedTasks,
     required this.pendingTasks,
-    required this.tasksCompletionData,
   });
 
   @override
@@ -176,21 +174,54 @@ class _ProfilState extends State<Profil> {
                   const SizedBox(height: 8),
                   Container(
                     height: 200,
-                    color: ColorCollection.primary100,
-                    child: Center(
-                      child: widget.completedTasks > 0
-                          ? Text(
-                              "${((widget.completedTasks / (widget.completedTasks + widget.pendingTasks)) * 100).toStringAsFixed(1)}% Tugas Selesai",
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.green,
-                              ),
-                            )
-                          : const Text(
-                              "Belum ada tugas selesai",
-                              style: TextStyle(color: Colors.grey),
+                    color: Colors.grey[200],
+                    child: BarChart(
+                      BarChartData(
+                        barGroups: _generateTaskCompletionData(),
+                        titlesData: FlTitlesData(
+                          leftTitles: AxisTitles(),
+                          rightTitles: AxisTitles(),
+                          topTitles: AxisTitles(),
+                          bottomTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              getTitlesWidget: (value, meta) {
+                                final days = [
+                                  'Mon',
+                                  'Tue',
+                                  'Wed',
+                                  'Thu',
+                                  'Fri',
+                                  'Sat',
+                                  'Sun'
+                                ];
+                                return Text(
+                                  days[value.toInt()],
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.black,
+                                  ),
+                                );
+                              },
                             ),
+                          ),
+                        ),
+                        gridData: FlGridData(show: false),
+                        borderData: FlBorderData(show: false),
+                        barTouchData: BarTouchData(
+                          touchTooltipData: BarTouchTooltipData(
+                            getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                              return BarTooltipItem(
+                                "${rod.toY.toInt()} tasks completed",
+                                const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 40),
@@ -202,8 +233,7 @@ class _ProfilState extends State<Profil> {
                         Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
-                                builder: (context) =>
-                                    SignUpPage())); // Hapus keyword const
+                                builder: (context) => SignUpPage()));
                       },
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 24),
@@ -232,6 +262,32 @@ class _ProfilState extends State<Profil> {
         ),
       ),
     );
+  }
+
+  List<BarChartGroupData> _generateTaskCompletionData() {
+    // Distribute completed tasks over the last 7 days
+    List<int> dailyTasks = List.filled(7, 0);
+    int remainingTasks = widget.completedTasks;
+
+    for (int i = 0; i < 7 && remainingTasks > 0; i++) {
+      dailyTasks[i] = (remainingTasks / (7 - i)).ceil();
+      remainingTasks -= dailyTasks[i];
+    }
+
+    return dailyTasks
+        .asMap()
+        .entries
+        .map((entry) => BarChartGroupData(
+              x: entry.key,
+              barRods: [
+                BarChartRodData(
+                  toY: entry.value.toDouble(),
+                  color: Colors.blue,
+                  width: 16,
+                ),
+              ],
+            ))
+        .toList();
   }
 
   Widget _buildSummaryCard(
