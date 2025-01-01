@@ -8,11 +8,11 @@ class TugasCard extends StatelessWidget {
   final Widget? trailing;
 
   const TugasCard({
-    Key? key, 
-    required this.task, 
-    required this.onTap, 
-    this.trailing})
-      : super(key: key);
+    Key? key,
+    required this.task,
+    required this.onTap,
+    this.trailing,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -46,21 +46,21 @@ class TugasCard extends StatelessWidget {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: ColorCollection.neutral200, // Warna background
-                          borderRadius: BorderRadius.circular(8), // Rounded
+                          color: ColorCollection.neutral200,
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          task['category']!,
+                          task['category'] ?? 'Unknown Category',
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: ColorCollection.neutral600, // Warna teks
+                            color: ColorCollection.neutral600,
                           ),
                         ),
                       ),
                       const SizedBox(height: Spacing.lg),
                       Text(
-                        task['title']!,
+                        task['title'] ?? 'Untitled Task',
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
@@ -71,7 +71,7 @@ class TugasCard extends StatelessWidget {
                         height: Spacing.md,
                       ),
                       Text(
-                        '${task['date']} | ${task['time']}',
+                        '${task['date'] ?? 'Unknown Date'} | ${task['time'] ?? 'Unknown Time'}',
                         style: const TextStyle(
                           fontSize: 14,
                           color: ColorCollection.neutral600,
