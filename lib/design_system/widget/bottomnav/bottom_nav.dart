@@ -57,8 +57,7 @@ class _BottomNavbarState extends State<BottomNavbar> {
           currentIndex: selectedIndex,
           selectedItemColor: ColorCollection.primary900,
           unselectedItemColor: ColorCollection.neutral500,
-          backgroundColor: ColorCollection
-              .primary100,
+          backgroundColor: ColorCollection.primary100,
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.list), label: 'Tugasku'),
             BottomNavigationBarItem(

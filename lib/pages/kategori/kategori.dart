@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:notequ/design_system/styles/color.dart';
 import 'package:notequ/design_system/widget/card/task_card.dart';
 import 'package:notequ/pages/tugasku/detail_tugas.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class Kategori extends StatefulWidget {
   final List<Map<String, String>> tasks; // Daftar tugas
   final List<String> categories; // Daftar kategori
   final Function(Map<String, String>) addTask; // Fungsi untuk menambah tugas
-  final Function(Map<String, String>) updateTask; // Fungsi untuk mengedit tugas
+  final Future<void> Function(Map<String, String>) updateTask;
+  // Fungsi untuk mengedit tugas
   final Function(Map<String, String>)
       deleteTask; // Fungsi untuk menghapus tugas
   final Function(Map<String, String>)
@@ -28,22 +30,33 @@ class Kategori extends StatefulWidget {
 }
 
 class _KategoriState extends State<Kategori> {
-  late List<String> categories; // Kategori lokal
+  List<String> categories = []; // Kategori lokal
   String selectedCategory = 'Semua'; // Kategori terpilih
+  late Future<List<Map<String, dynamic>>> futureTasks;
 
-  @override
-  void initState() {
-    super.initState();
-    categories = List.from(widget.categories);
+  final SupabaseClient client = Supabase.instance.client;
+
+  Future<List<Map<String, dynamic>>> fetchCategories() async {
+    final response = await client.from('categories').select().execute();
+    if (response.status != 200 || response.data == null) {
+      return List<Map<String, dynamic>>.from(response.data ?? []);
+    } else {
+      throw Exception('Failed to fetch categories: ${response.status}');
+    }
   }
 
-  List<Map<String, String>> get filteredTasks {
-    if (selectedCategory == 'Semua') {
-      return widget.tasks;
+  Future<List<Map<String, dynamic>>> fetchTasksByCategory(
+      String category) async {
+    final query = client.from('tasks').select();
+    if (category.isNotEmpty) {
+      query.eq('category', category);
     }
-    return widget.tasks
-        .where((task) => task['category'] == selectedCategory)
-        .toList();
+    final response = await query.execute();
+    if (response.status != 201 || response.data == null) {
+      return List<Map<String, dynamic>>.from(response.data ?? []);
+    } else {
+      throw Exception('Failed to fetch tasks: ${response.status}');
+    }
   }
 
   void showAddCategoryDialog() {
@@ -89,6 +102,27 @@ class _KategoriState extends State<Kategori> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    fetchCategories().then((fetchedCategories) {
+      setState(() {
+        categories = [
+          'Semua',
+          ...fetchedCategories.map((e) => e['name'] as String)
+        ];
+      });
+    });
+    futureTasks = fetchTasksByCategory(selectedCategory);
+  }
+
+  void onCategorySelected(String category) {
+    setState(() {
+      selectedCategory = category;
+      futureTasks = fetchTasksByCategory(category == 'Semua' ? '' : category);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -131,9 +165,7 @@ class _KategoriState extends State<Kategori> {
                             showCheckmark: false,
                             selected: selectedCategory == categories[index],
                             onSelected: (isSelected) {
-                              setState(() {
-                                selectedCategory = categories[index];
-                              });
+                              onCategorySelected(categories[index]);
                             },
                             backgroundColor: ColorCollection.primary100,
                             selectedColor: ColorCollection.primary900,
@@ -152,8 +184,15 @@ class _KategoriState extends State<Kategori> {
             ),
             const SizedBox(height: 16),
             Expanded(
-              child: filteredTasks.isEmpty
-                  ? Center(
+              child: FutureBuilder<List<Map<String, dynamic>>>(
+                future: futureTasks,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  } else if (snapshot.data == null || snapshot.data!.isEmpty) {
+                    return Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -166,9 +205,10 @@ class _KategoriState extends State<Kategori> {
                           const Text(
                             'Belum ada tugas nih',
                             style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                                color: ColorCollection.primary900),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: ColorCollection.primary900,
+                            ),
                           ),
                           const SizedBox(height: 8),
                           Text(
@@ -182,30 +222,37 @@ class _KategoriState extends State<Kategori> {
                           ),
                         ],
                       ),
-                    )
-                  : ListView.builder(
-                      itemCount: filteredTasks.length,
-                      itemBuilder: (context, index) {
-                        final task = filteredTasks[index];
-                        return TugasCard(
-                          task: task,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => DetailTugas(
-                                  task: task,
-                                  onTaskUpdated: widget.updateTask,
-                                  onTaskDeleted: () => widget.deleteTask(task),
-                                  onTaskCompleted: () =>
-                                      widget.completeTask(task),
-                                ),
+                    );
+                  }
+                  final tasks = snapshot.data!;
+                  return ListView.builder(
+                    itemCount: tasks.length,
+                    itemBuilder: (context, index) {
+                      final task = tasks[index]
+                          .map((key, value) => MapEntry(key, value.toString()));
+
+                      return TugasCard(
+                        task: task,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => DetailTugas(
+                                task: task,
+                                onTaskUpdated: (updatedTask) =>
+                                    widget.updateTask(updatedTask),
+                                onTaskDeleted: () => widget.deleteTask(task),
+                                onTaskCompleted: () =>
+                                    widget.completeTask(task),
                               ),
-                            );
-                          },
-                        );
-                      },
-                    ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  );
+                },
+              ),
             ),
           ],
         ),

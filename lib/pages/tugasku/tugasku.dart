@@ -4,28 +4,62 @@ import 'package:notequ/design_system/styles/spacing.dart';
 import 'package:notequ/design_system/widget/card/task_card.dart';
 import 'package:notequ/pages/tugasku/custom_alert.dart';
 import 'package:notequ/pages/tugasku/detail_tugas.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class Tugasku extends StatefulWidget {
-  final List<Map<String, String>> tasks;
-  final List<Map<String, String>> completedTasks;
-  final void Function(Map<String, String>) addTask;
-  final void Function(Map<String, String>) markAsCompleted;
-  final void Function(Map<String, String>) markAsIncomplete;
+  final SupabaseClient client;
 
-  const Tugasku({
-    Key? key,
-    required this.tasks,
-    required this.completedTasks,
-    required this.addTask,
-    required this.markAsCompleted,
-    required this.markAsIncomplete,
-  }) : super(key: key);
+  const Tugasku({Key? key, required this.client}) : super(key: key);
 
   @override
   _TugaskuState createState() => _TugaskuState();
 }
 
 class _TugaskuState extends State<Tugasku> {
+  List<Map<String, String>> tasks = [];
+  List<Map<String, String>> completedTasks = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTasks();
+  }
+
+  Future<void> _loadTasks() async {
+    final fetchedTasks = await fetchTasks(status: 'pending');
+    final fetchedCompletedTasks = await fetchTasks(status: 'completed');
+
+    setState(() {
+      tasks = fetchedTasks;
+      completedTasks = fetchedCompletedTasks;
+    });
+  }
+
+  Future<List<Map<String, String>>> fetchTasks({String? status}) async {
+    final response = await widget.client
+        .from('tasks')
+        .select()
+        .eq('status', status ?? 'pending')
+        .order('date', ascending: true)
+        .execute();
+
+    if (response.status != 200 || response.data == null) {
+      print('Error fetching tasks: Status ${response.status}');
+      return [];
+    }
+
+    return (response.data as List<dynamic>).map((task) {
+      return {
+        'id': task['id'].toString(),
+        'title': task['title'].toString(),
+        'category': task['category'].toString(),
+        'date': task['date'].toString(),
+        'time': task['time'].toString(),
+        'description': task['description'].toString(),
+      };
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -77,9 +111,8 @@ class _TugaskuState extends State<Tugasku> {
                     Expanded(
                       child: TabBarView(
                         children: [
-                          _buildTaskList(widget.tasks, isCompleted: false),
-                          _buildTaskList(widget.completedTasks,
-                              isCompleted: true),
+                          _buildTaskList(tasks, isCompleted: false),
+                          _buildTaskList(completedTasks, isCompleted: true),
                         ],
                       ),
                     ),
@@ -96,7 +129,10 @@ class _TugaskuState extends State<Tugasku> {
             context: context,
             builder: (context) {
               return CustomAlert(
-                onAddTask: widget.addTask,
+                onAddTask: (newTask) async {
+                  await widget.client.from('tasks').insert(newTask).execute();
+                  _loadTasks();
+                },
                 categories: [
                   'Semua',
                   'Tugas Kuliah',
@@ -177,21 +213,39 @@ class _TugaskuState extends State<Tugasku> {
               MaterialPageRoute(
                 builder: (context) => DetailTugas(
                   task: task,
-                  onTaskUpdated: (updatedTask) {
-                    setState(() {
-                      taskList[index] = updatedTask;
-                    });
+                  onTaskUpdated: (updatedTask) async {
+                    final response = await widget.client
+                        .from('tasks')
+                        .update(updatedTask)
+                        .eq('id', task['id'])
+                        .execute();
+
+                    if (response.status == 200) {
+                      _loadTasks();
+                    } else {
+                      print('Error updating tasks: ${response.status}');
+                    }
                   },
-                  onTaskDeleted: () {
-                    setState(() {
-                      taskList.removeAt(index);
-                    });
+                  onTaskDeleted: () async {
+                    final response = await widget.client
+                        .from('tasks')
+                        .delete()
+                        .eq('id', task['id'])
+                        .execute();
+
+                    if (response.status == 200) {
+                      _loadTasks();
+                    } else {
+                      print('Deleting tasks: Status ${response.status}');
+                    }
                   },
-                  onTaskCompleted: () {
-                    setState(() {
-                      taskList.removeAt(index);
-                      widget.markAsCompleted(task);
-                    });
+                  onTaskCompleted: () async {
+                    await widget.client
+                        .from('tasks')
+                        .update({'status': 'completed'})
+                        .eq('id', task['id'])
+                        .execute();
+                    _loadTasks();
                   },
                 ),
               ),
@@ -206,10 +260,21 @@ class _TugaskuState extends State<Tugasku> {
               isCompleted ? Icons.check_box : Icons.check_box_outline_blank,
               color: isCompleted ? Colors.green : ColorCollection.neutral500,
             ),
-            onPressed: () {
-              isCompleted
-                  ? widget.markAsIncomplete(task)
-                  : widget.markAsCompleted(task);
+            onPressed: () async {
+              if (isCompleted) {
+                await widget.client
+                    .from('tasks')
+                    .update({'status': 'pending'})
+                    .eq('id', task['id'])
+                    .execute();
+              } else {
+                await widget.client
+                    .from('tasks')
+                    .update({'status': 'completed'})
+                    .eq('id', task['id'])
+                    .execute();
+              }
+              _loadTasks();
             },
           ),
         );

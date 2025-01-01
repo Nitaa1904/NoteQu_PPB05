@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:notequ/design_system/styles/color.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:intl/intl.dart';
 
 class Kalender extends StatefulWidget {
   final List<Map<String, String>> tasks;
@@ -12,37 +14,46 @@ class Kalender extends StatefulWidget {
 }
 
 class _KalenderState extends State<Kalender> {
+  final SupabaseClient client = Supabase.instance.client;
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
-  Map<DateTime, List<Map<String, String>>> _tasksForDates = {};
+  List<Map<String, dynamic>> _selectedTasks = [];
 
-  @override
-  void initState() {
-    super.initState();
-    _tasksForDates = _groupTasksByDate(widget.tasks);
+  Future<List<Map<String, dynamic>>> fetchTasksByDate(DateTime date) async {
+    final response = await client
+        .from('tasks')
+        .select()
+        .eq('date', DateFormat('yyyy-MM-dd').format(date))
+        .execute();
+
+    if (response.status == 200 && response.data != null) {
+      return List<Map<String, dynamic>>.from(response.data);
+    } else {
+      throw Exception('Failed to fetch tasks: ${response.status}');
+    }
   }
 
-  // Fungsi untuk mengelompokkan tugas berdasarkan tanggal
-  Map<DateTime, List<Map<String, String>>> _groupTasksByDate(
-      List<Map<String, String>> tasks) {
-    final Map<DateTime, List<Map<String, String>>> groupedTasks = {};
-    for (var task in tasks) {
-      final taskDate = DateTime.tryParse(task['date'] ?? '');
-      if (taskDate != null) {
-        final normalizedDate =
-            DateTime(taskDate.year, taskDate.month, taskDate.day);
-        groupedTasks.putIfAbsent(normalizedDate, () => []).add(task);
-      }
-    }
-    return groupedTasks;
+  void _onDaySelected(DateTime selectedDay, DateTime focusedDay) {
+    setState(() {
+      _selectedDay = selectedDay;
+      _focusedDay = focusedDay;
+    });
+
+    // Fetch tasks for the selected day
+    fetchTasksByDate(selectedDay).then((tasks) {
+      setState(() {
+        _selectedTasks = tasks;
+      });
+    }).catchError((error) {
+      // Handle error here
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error fetching tasks: $error')),
+      );
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    // Mendapatkan tugas untuk tanggal yang dipilih
-    final selectedTasks =
-        _selectedDay != null ? _tasksForDates[_selectedDay] ?? [] : [];
-
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -62,12 +73,7 @@ class _KalenderState extends State<Kalender> {
             lastDay: DateTime.utc(2030, 12, 31),
             focusedDay: _focusedDay,
             selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-            onDaySelected: (selectedDay, focusedDay) {
-              setState(() {
-                _selectedDay = selectedDay;
-                _focusedDay = focusedDay;
-              });
-            },
+            onDaySelected: _onDaySelected,
             calendarStyle: const CalendarStyle(
               todayDecoration: BoxDecoration(
                 color: ColorCollection.primary900,
@@ -81,7 +87,7 @@ class _KalenderState extends State<Kalender> {
           ),
           const SizedBox(height: 16),
           Expanded(
-            child: selectedTasks.isEmpty
+            child: _selectedTasks.isEmpty
                 ? Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -103,9 +109,9 @@ class _KalenderState extends State<Kalender> {
                     ),
                   )
                 : ListView.builder(
-                    itemCount: selectedTasks.length,
+                    itemCount: _selectedTasks.length,
                     itemBuilder: (context, index) {
-                      final task = selectedTasks[index];
+                      final task = _selectedTasks[index];
                       return ListTile(
                         title: Text(task['title'] ?? ''),
                         subtitle: Text(

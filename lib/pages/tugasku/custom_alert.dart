@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:notequ/design_system/styles/color.dart';
 import 'package:timezone/timezone.dart' as tz;
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class CustomAlert extends StatefulWidget {
   final Function(Map<String, String>) onAddTask;
@@ -24,6 +25,8 @@ class _CustomAlertState extends State<CustomAlert> {
 
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
+
+  final SupabaseClient client = Supabase.instance.client;
 
   @override
   void initState() {
@@ -69,6 +72,26 @@ class _CustomAlertState extends State<CustomAlert> {
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
     );
+  }
+
+  Future<void> addTask({
+    required String title,
+    required String category,
+    required DateTime date,
+    required String time,
+    required String description,
+  }) async {
+    try {
+      await client.from('tasks').insert({
+        'title': title,
+        'category': category,
+        'date': date.toIso8601String(),
+        'time': time,
+        'description': description,
+      });
+    } catch (e) {
+      print('Error adding task: $e');
+    }
   }
 
   @override
@@ -250,7 +273,7 @@ class _CustomAlertState extends State<CustomAlert> {
           ),
         ),
         TextButton(
-          onPressed: () {
+          onPressed: () async {
             if (_taskController.text.isNotEmpty) {
               final now = DateTime.now();
 
@@ -279,6 +302,18 @@ class _CustomAlertState extends State<CustomAlert> {
                 }
               }
 
+              await addTask(
+                title: _taskController.text,
+                category: selectedCategory,
+                date: selectedDate ?? DateTime.now(),
+                time: selectedTime != null
+                    ? selectedTime!.format(context)
+                    : 'No Time',
+                description: _noteController.text.isNotEmpty
+                    ? _noteController.text
+                    : 'Tidak ada catatan untuk tugas ini.',
+              );
+
               widget.onAddTask({
                 'title': _taskController.text,
                 'category': selectedCategory,
@@ -295,6 +330,7 @@ class _CustomAlertState extends State<CustomAlert> {
                     ? _noteController.text
                     : 'Tidak ada catatan untuk tugas ini.',
               });
+
               Navigator.of(context).pop();
             }
           },
