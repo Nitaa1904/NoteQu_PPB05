@@ -5,7 +5,7 @@ import 'package:notequ/design_system/widget/card/task_card.dart';
 import 'package:notequ/pages/tugasku/custom_alert.dart';
 import 'package:notequ/pages/tugasku/detail_tugas.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:notequ/pages/tugasku/custom_alert.dart';
+// import 'package:notequ/pages/tugasku/custom_alert.dart';
 
 class Tugasku extends StatefulWidget {
   final SupabaseClient client;
@@ -81,25 +81,60 @@ class _TugaskuState extends State<Tugasku> {
     }).toList();
   }
 
+  // void _showCustomAlert() {
+  //   showDialog(
+  //     context: context,
+  //     builder: (context) => CustomAlert(
+  //       categories: categories,
+  //       onAddTask: (task) async {
+  //         await widget.client.from('tasks').insert(task).execute();
+  //         _loadTasks();
+  //       },
+  //       onCategorySelected: (categoryId) {
+  //         setState(() {
+  //           selectedCategoryId = categoryId;
+  //         });
+  //       },
+  //       onAddCategory: (categoryName) async {
+  //         await widget.client
+  //             .from('categories')
+  //             .insert({'name': categoryName}).execute();
+  //         _loadCategories();
+  //       },
+  //     ),
+  //   );
+  // }
+
   void _showCustomAlert() {
     showDialog(
       context: context,
       builder: (context) => CustomAlert(
         categories: categories,
         onAddTask: (task) async {
-          await widget.client.from('tasks').insert(task).execute();
-          _loadTasks();
+          // Insert the new task into the database
+          final response =
+              await widget.client.from('tasks').insert(task).execute();
+          if (response.status == 201) {
+            _loadTasks(); // Refresh task list
+          } else {
+            print('Error adding task: ${response.status}');
+          }
         },
         onCategorySelected: (categoryId) {
           setState(() {
             selectedCategoryId = categoryId;
           });
+          _loadTasks();
         },
         onAddCategory: (categoryName) async {
-          await widget.client
+          final response = await widget.client
               .from('categories')
               .insert({'name': categoryName}).execute();
-          _loadCategories();
+          if (response.status == 201) {
+            _loadCategories(); // Refresh category list
+          } else {
+            print('Error adding category: ${response.status}');
+          }
         },
       ),
     );
@@ -127,28 +162,28 @@ class _TugaskuState extends State<Tugasku> {
               'Mau buat tugas apa hari ini?',
               style: TextStyle(fontSize: 16, color: ColorCollection.neutral600),
             ),
-            const SizedBox(height: 16),
-            categories.isNotEmpty
-                ? Wrap(
-                    spacing: 8.0,
-                    children: categories.map((category) {
-                      final categoryId = category['id']?.toString() ?? '0';
-                      final categoryName =
-                          category['name']?.toString() ?? 'Unknown';
+            // const SizedBox(height: 16),
+            // categories.isNotEmpty
+            //     ? Wrap(
+            //         spacing: 8.0,
+            //         children: categories.map((category) {
+            //           final categoryId = category['id']?.toString() ?? '0';
+            //           final categoryName =
+            //               category['name']?.toString() ?? 'Unknown';
 
-                      return ChoiceChip(
-                        label: Text(categoryName),
-                        selected: selectedCategoryId == categoryId,
-                        onSelected: (isSelected) {
-                          setState(() {
-                            selectedCategoryId = isSelected ? categoryId : null;
-                          });
-                          _loadTasks();
-                        },
-                      );
-                    }).toList(),
-                  )
-                : const CircularProgressIndicator(),
+            //           return ChoiceChip(
+            //             label: Text(categoryName),
+            //             selected: selectedCategoryId == categoryId,
+            //             onSelected: (isSelected) {
+            //               setState(() {
+            //                 selectedCategoryId = isSelected ? categoryId : null;
+            //               });
+            //               _loadTasks();
+            //             },
+            //           );
+            //         }).toList(),
+            //       )
+            //     : const CircularProgressIndicator(),
             const SizedBox(height: 24),
             Expanded(
               child: DefaultTabController(
@@ -190,29 +225,37 @@ class _TugaskuState extends State<Tugasku> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          showDialog(
-            context: context,
-            builder: (context) {
-              return CustomAlert(
-                categories: [
-                  {'id': '1', 'name': 'Work'},
-                  {'id': '2', 'name': 'Personal'},
-                ],
-                onAddTask: (task) async {
-                  debugPrint("Task added: $task");
-                },
-                onCategorySelected: (category) {
-                  debugPrint("Category selected: $category");
-                },
-                onAddCategory: (categoryName) async {
-                  debugPrint("Category added: $categoryName");
-                },
-              );
-            },
-          );
+          _showCustomAlert();
         },
-        child: const Icon(Icons.add),
+        child: Icon(Icons.add),
+        backgroundColor: ColorCollection.primary900,
+        foregroundColor: ColorCollection.primary100,
       ),
+      // floatingActionButton: FloatingActionButton(
+      //   onPressed: () {
+      //     showDialog(
+      //       context: context,
+      //       builder: (context) {
+      //         return CustomAlert(
+      //           categories: [
+      //             {'id': '1', 'name': 'Work'},
+      //             {'id': '2', 'name': 'Personal'},
+      //           ],
+      //           onAddTask: (task) async {
+      //             debugPrint("Task added: $task");
+      //           },
+      //           onCategorySelected: (category) {
+      //             debugPrint("Category selected: $category");
+      //           },
+      //           onAddCategory: (categoryName) async {
+      //             debugPrint("Category added: $categoryName");
+      //           },
+      //         );
+      //       },
+      //     );
+      //   },
+      //   child: const Icon(Icons.add),
+      // ),
     );
   }
 
@@ -323,7 +366,9 @@ class _TugaskuState extends State<Tugasku> {
           trailing: IconButton(
             icon: Icon(
               isCompleted ? Icons.check_box : Icons.check_box_outline_blank,
-              color: isCompleted ? Colors.green : ColorCollection.neutral500,
+              color: isCompleted
+                  ? ColorCollection.accentGreen
+                  : ColorCollection.neutral500,
             ),
             onPressed: () async {
               if (isCompleted) {

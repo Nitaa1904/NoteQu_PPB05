@@ -31,8 +31,8 @@ class _KategoriState extends State<Kategori> {
   List<Map<String, dynamic>> categories = [];
   String selectedCategory = 'Semua';
   late Future<List<Map<String, dynamic>>> futureTasks;
-
   final SupabaseClient client = Supabase.instance.client;
+  final TextEditingController _categoryController = TextEditingController();
 
   Future<void> addCategory(String name) async {
     try {
@@ -74,7 +74,6 @@ class _KategoriState extends State<Kategori> {
         categories: categories,
         onAddTask: (task) async {
           // Tambahkan logika untuk menambah tugas di sini
-          // Contoh:
           await widget.addTask(
               task.map((key, value) => MapEntry(key, value.toString())));
           setState(() {
@@ -101,23 +100,63 @@ class _KategoriState extends State<Kategori> {
 
   void onCategorySelected(String categoryId) {
     setState(() {
-      selectedCategory = categoryId;
+      final selected = categories.firstWhere(
+        (category) => category['id'] == categoryId,
+        orElse: () => {'name': 'Semua'},
+      );
+      selectedCategory = selected['name'] as String? ?? 'Semua';
       futureTasks =
           fetchTasksByCategory(categoryId.isEmpty ? null : categoryId);
     });
   }
 
-  // void onCategorySelected(String categoryId) {
-  //   setState(() {
-  //     final selected = categories.firstWhere(
-  //       (category) => category['id'] == categoryId,
-  //       orElse: () => {'name': 'Semua'},
-  //     );
-  //     selectedCategory = selected['name'] as String? ?? 'Semua';
-  //     futureTasks =
-  //         fetchTasksByCategory(categoryId.isEmpty ? null : categoryId);
-  //   });
-  // }
+  void _showAddCategoryDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          title: const Text("Tambah Kategori Baru"),
+          content: TextField(
+            controller: _categoryController,
+            decoration: const InputDecoration(
+              hintText: "Masukkan nama kategori",
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Batal"),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (_categoryController.text.isNotEmpty) {
+                  try {
+                    await addCategory(_categoryController.text);
+                    Navigator.pop(context);
+                  } catch (error) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                          content: Text('Gagal menambahkan kategori: $error')),
+                    );
+                  }
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Nama kategori tidak boleh kosong')),
+                  );
+                }
+              },
+              child: const Text("Tambah"),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -151,12 +190,27 @@ class _KategoriState extends State<Kategori> {
                         final category = categories[index];
                         return Padding(
                           padding: const EdgeInsets.only(right: 8.0),
-                          child: ChoiceChip(
-                            label: Text(category['name'] ?? 'Unknown'),
+                          child: RawChip(
+                            label: Text(
+                              category['name'] ?? 'Unknown',
+                              style: TextStyle(
+                                color: selectedCategory == category['id']
+                                    ? ColorCollection
+                                        .primary100 // Warna teks ketika dipilih
+                                    : ColorCollection
+                                        .primary900, // Warna teks default),
+                              ),
+                            ),
                             selected: selectedCategory == category['id'],
+                            selectedColor: ColorCollection.primary900,
+                            backgroundColor: ColorCollection.primary100,
                             onSelected: (isSelected) {
-                              onCategorySelected(
-                                  isSelected ? category['id'] : '');
+                              // onCategorySelected(
+                              //     isSelected ? category['id'] : '');
+                              setState(() {
+                                selectedCategory =
+                                    isSelected ? category['id'] : null;
+                              });
                             },
                           ),
                         );
@@ -165,9 +219,11 @@ class _KategoriState extends State<Kategori> {
                   ),
                 ),
                 IconButton(
-                  icon:
-                      const Icon(Icons.add, color: ColorCollection.primary900),
-                  onPressed: showAddTaskDialog,
+                  icon: const Icon(
+                    Icons.add,
+                    color: ColorCollection.primary900,
+                  ),
+                  onPressed: _showAddCategoryDialog,
                 ),
               ],
             ),
@@ -180,7 +236,7 @@ class _KategoriState extends State<Kategori> {
                     return const Center(child: CircularProgressIndicator());
                   } else if (snapshot.hasError) {
                     return Center(child: Text('Error: ${snapshot.error}'));
-                  } else if (snapshot.data == null || snapshot.data!.isEmpty) {
+                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                     return Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -222,7 +278,6 @@ class _KategoriState extends State<Kategori> {
                     itemBuilder: (context, index) {
                       final task = tasks[index]
                           .map((key, value) => MapEntry(key, value.toString()));
-
                       return TugasCard(
                         task: task,
                         onTap: () {
