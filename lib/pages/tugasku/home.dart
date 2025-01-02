@@ -17,15 +17,25 @@ class _HomepageState extends State<Homepage> {
   final SupabaseClient supabase = Supabase.instance.client;
   List<Map<String, String>> tasks = [];
   List<Map<String, dynamic>> completedTasks = [];
-  final List<String> categories = [
-    'Semua',
-    'Tugas Kuliah',
-    'Pribadi',
-    'Kerja',
-    'Hobi',
-    'Esport',
-    'Olahraga',
-  ];
+  List<Map<String, dynamic>> categories = [];
+
+  Future<void> _fetchCategories() async {
+    final response =
+        await supabase.from('categories').select().order('id').execute();
+    if (response.status == 200 && response.data != null) {
+      final data = response.data as List<dynamic>;
+      setState(() {
+        categories = data.map((category) {
+          return {
+            'id': category['id'] ?? 0, // Default ke 0 jika null
+            'name': category['name'] ?? 'Unknown', // Default nama kategori
+          };
+        }).toList();
+      });
+    } else {
+      print('Error fetching categories: ${response.data}');
+    }
+  }
 
   Future<void> _fetchTasks() async {
     final response = await supabase.from('task').select().order('id').execute();
@@ -39,7 +49,7 @@ class _HomepageState extends State<Homepage> {
             .map((task) => {
                   'id': task['id'].toString(),
                   'title': task['title'].toString(),
-                  'category': task['category']?.toString() ?? '',
+                  'category_id': task['category_id']?.toString() ?? '0',
                   'date': task['date']?.toString() ?? '',
                   'time': task['time']?.toString() ?? '',
                   'description': task['description']?.toString() ?? '',
@@ -50,7 +60,7 @@ class _HomepageState extends State<Homepage> {
             .map((task) => {
                   'id': task['id'].toString(),
                   'title': task['title'].toString(),
-                  'category': task['category']?.toString() ?? '',
+                  'category_id': task['category_id'] ?? 0,
                   'date': task['date']?.toString() ?? '',
                   'time': task['time']?.toString() ?? '',
                   'description': task['description']?.toString() ?? '',
@@ -115,6 +125,7 @@ class _HomepageState extends State<Homepage> {
   @override
   void initState() {
     super.initState();
+    _fetchCategories();
     _fetchTasks();
   }
 
@@ -125,7 +136,8 @@ class _HomepageState extends State<Homepage> {
         tugasku: Tugasku(client: supabase),
         kategori: Kategori(
           tasks: tasks,
-          categories: categories,
+          categories:
+              categories.map((category) => category['name'] as String).toList(),
           addTask: _addTask,
           updateTask: _updateTask,
           deleteTask: (task) => _deleteTask(task['id']),

@@ -6,16 +6,26 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class CustomAlert extends StatefulWidget {
-  final Function(Map<String, String>) onAddTask;
-  final List<String> categories;
+  final List<Map<String, dynamic>> categories; // Daftar kategori
+  final Future<void> Function(Map<String, dynamic>) onAddTask;
+  final Function(String) onCategorySelected; // Callback untuk klik kategori
+  final Future<void> Function(String)
+      onAddCategory; // Callback untuk tambah kategori
 
-  CustomAlert({required this.onAddTask, required this.categories});
+  const CustomAlert({
+    Key? key,
+    required this.categories,
+    required this.onAddTask,
+    required this.onCategorySelected,
+    required this.onAddCategory,
+  }) : super(key: key);
 
   @override
   _CustomAlertState createState() => _CustomAlertState();
 }
 
 class _CustomAlertState extends State<CustomAlert> {
+  final TextEditingController _categoryController = TextEditingController();
   final _taskController = TextEditingController();
   final _noteController = TextEditingController();
   DateTime? selectedDate;
@@ -23,34 +33,41 @@ class _CustomAlertState extends State<CustomAlert> {
   String selectedCategory = '';
   int? selectedReminder;
 
-  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-      FlutterLocalNotificationsPlugin();
-
-  final SupabaseClient client = Supabase.instance.client;
+  late FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
+  late SupabaseClient client;
 
   @override
   void initState() {
     super.initState();
     selectedCategory =
-        widget.categories.isNotEmpty ? widget.categories[0] : 'General';
+        widget.categories.isNotEmpty ? widget.categories[0]['id'] : 'General';
+    client = Supabase.instance.client;
+    flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
     _initializeNotifications();
   }
 
+  @override
+  void dispose() {
+    _categoryController.dispose();
+    _taskController.dispose();
+    _noteController.dispose();
+    super.dispose();
+  }
+
+  // Inisialisasi notifikasi lokal
   void _initializeNotifications() async {
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('app_icon');
-
     const InitializationSettings initializationSettings =
         InitializationSettings(android: initializationSettingsAndroid);
-
     await flutterLocalNotificationsPlugin.initialize(initializationSettings);
   }
 
+  // Jadwalkan notifikasi
   Future<void> scheduleNotification(
       String title, String body, DateTime scheduledDate) async {
     final tzScheduledDate = tz.TZDateTime.from(scheduledDate, tz.local);
-
-    const AndroidNotificationDetails androidPlatformChannelSpecifics =
+    const AndroidNotificationDetails androidDetails =
         AndroidNotificationDetails(
       'your_channel_id',
       'your_channel_name',
@@ -58,22 +75,21 @@ class _CustomAlertState extends State<CustomAlert> {
       importance: Importance.high,
       priority: Priority.high,
     );
-
-    const NotificationDetails platformChannelSpecifics =
-        NotificationDetails(android: androidPlatformChannelSpecifics);
-
+    const NotificationDetails notificationDetails =
+        NotificationDetails(android: androidDetails);
     await flutterLocalNotificationsPlugin.zonedSchedule(
       0,
       title,
       body,
       tzScheduledDate,
-      platformChannelSpecifics,
+      notificationDetails,
       androidAllowWhileIdle: true,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
     );
   }
 
+  // Tambahkan tugas ke database Supabase
   Future<void> addTask({
     required String title,
     required String category,
@@ -90,12 +106,115 @@ class _CustomAlertState extends State<CustomAlert> {
         'description': description,
       });
     } catch (e) {
-      print('Error adding task: $e');
+      debugPrint('Error adding task: $e');
     }
+  }
+
+  // Widget untuk input tanggal
+  Widget _buildDatePicker() {
+    return TextFormField(
+      readOnly: true,
+      onTap: () async {
+        DateTime? pickedDate = await showDatePicker(
+          context: context,
+          initialDate: DateTime.now(),
+          firstDate: DateTime(2000),
+          lastDate: DateTime(2100),
+        );
+        if (pickedDate != null) {
+          setState(() {
+            selectedDate = pickedDate;
+          });
+        }
+      },
+      decoration: InputDecoration(
+        hintText: selectedDate != null
+            ? DateFormat('dd-MM-yyyy').format(selectedDate!)
+            : 'Pilih tanggal buat tugas kamu',
+        suffixIcon: const Icon(Icons.calendar_today),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8.0),
+        ),
+      ),
+    );
+  }
+
+  // Widget untuk input waktu
+  Widget _buildTimePicker() {
+    return TextFormField(
+      readOnly: true,
+      onTap: () async {
+        TimeOfDay? pickedTime = await showTimePicker(
+          context: context,
+          initialTime: TimeOfDay.now(),
+        );
+        if (pickedTime != null) {
+          setState(() {
+            selectedTime = pickedTime;
+          });
+        }
+      },
+      decoration: InputDecoration(
+        hintText: selectedTime != null
+            ? selectedTime!.format(context)
+            : 'Pilih waktu buat tugas kamu',
+        suffixIcon: const Icon(Icons.access_time),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8.0),
+        ),
+      ),
+    );
+  }
+
+  void _showAddCategoryDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          title: const Text("Tambah Kategori Baru"),
+          content: TextField(
+            controller: _categoryController,
+            decoration: const InputDecoration(
+              hintText: "Masukkan nama kategori",
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Batal"),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (_categoryController.text.isNotEmpty) {
+                  try {
+                    await widget.onAddCategory(_categoryController.text);
+                    Navigator.pop(context);
+                  } catch (error) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                          content: Text('Gagal menambahkan kategori: $error')),
+                    );
+                  }
+                }
+              },
+              child: const Text("Tambah"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final TextEditingController categoryController = TextEditingController();
+    String selectedCategory = '';
+
     return AlertDialog(
       backgroundColor: ColorCollection.primary100,
       shape: RoundedRectangleBorder(
@@ -120,111 +239,50 @@ class _CustomAlertState extends State<CustomAlert> {
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Pilih Kategori',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
+            const Text('Pilih Kategori',
+                style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8.0,
-              runSpacing: 8.0,
-              children: widget.categories.map((category) {
-                return RawChip(
-                  label: Text(
-                    category,
-                    style: TextStyle(
-                        color: selectedCategory == category
-                            ? ColorCollection.primary100
-                            : ColorCollection.primary900),
+              children: [
+                SizedBox(
+                  width: double.maxFinite,
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: widget.categories.length,
+                    itemBuilder: (context, index) {
+                      final category = widget.categories[index];
+                      return ListTile(
+                        title: Text(
+                          category['name'] ?? 'Unknown',
+                          style: TextStyle(
+                            color: ColorCollection.primary900,
+                          ),
+                        ),
+                        onTap: () {
+                          widget.onCategorySelected(category['id'] as String);
+                          Navigator.pop(context);
+                        },
+                      );
+                    },
                   ),
-                  selected: selectedCategory == category,
-                  selectedColor: ColorCollection.primary900,
-                  backgroundColor: ColorCollection.primary100,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.0)),
-                  showCheckmark: false,
-                  onSelected: (isSelected) {
-                    if (isSelected) {
-                      setState(() {
-                        selectedCategory = category;
-                      });
-                    }
-                  },
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              readOnly: true,
-              onTap: () async {
-                DateTime? pickedDate = await showDatePicker(
-                  context: context,
-                  initialDate: DateTime.now(),
-                  firstDate: DateTime(2000),
-                  lastDate: DateTime(2100),
-                );
-                if (pickedDate != null) {
-                  setState(() {
-                    selectedDate = pickedDate;
-                  });
-                }
-              },
-              decoration: InputDecoration(
-                hintText: selectedDate != null
-                    ? DateFormat('dd-MM-yyyy').format(selectedDate!)
-                    : 'Pilih tanggal buat tugas kamu',
-                suffixIcon: const Icon(Icons.calendar_today),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
                 ),
-              ),
+              ],
             ),
             const SizedBox(height: 16),
-            TextFormField(
-              readOnly: true,
-              onTap: () async {
-                TimeOfDay? pickedTime = await showTimePicker(
-                  context: context,
-                  initialTime: TimeOfDay.now(),
-                );
-                if (pickedTime != null) {
-                  setState(() {
-                    selectedTime = pickedTime;
-                  });
-                }
-              },
-              decoration: InputDecoration(
-                hintText: selectedTime != null
-                    ? selectedTime!.format(context)
-                    : 'Pilih waktu buat tugas kamu',
-                suffixIcon: const Icon(Icons.access_time),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
-              ),
-            ),
+            _buildDatePicker(),
             const SizedBox(height: 16),
-            const Text(
-              'Pengingat',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
+            _buildTimePicker(),
+            const SizedBox(height: 16),
+            const Text('Pengingat',
+                style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8.0,
-              runSpacing: 8.0,
               children: [5, 10, 15, 30, 60].map((minute) {
-                return RawChip(
-                  label: Text(
-                    '$minute menit sebelumnya',
-                    style: TextStyle(
-                        color: selectedReminder == minute
-                            ? ColorCollection.primary100
-                            : ColorCollection.primary900),
-                  ),
+                return ChoiceChip(
+                  label: Text('$minute menit sebelumnya'),
                   selected: selectedReminder == minute,
-                  selectedColor: ColorCollection.primary900,
-                  backgroundColor: ColorCollection.primary100,
-                  showCheckmark: false,
                   onSelected: (isSelected) {
                     setState(() {
                       selectedReminder = isSelected ? minute : null;
@@ -234,49 +292,29 @@ class _CustomAlertState extends State<CustomAlert> {
               }).toList(),
             ),
             const SizedBox(height: 16),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Catatan',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
+            TextFormField(
+              controller: _noteController,
+              maxLines: 3,
+              decoration: InputDecoration(
+                hintText: 'Tambahkan catatan untuk tugas ini',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8.0),
                 ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _noteController,
-                  maxLines: 3,
-                  decoration: InputDecoration(
-                    hintText: 'Tambahkan catatan untuk tugas ini',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ],
         ),
       ),
       actions: [
         TextButton(
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
-          child: const Text(
-            'Batal',
-            style: TextStyle(
-                fontSize: 16,
-                color: ColorCollection.neutral600,
-                fontWeight: FontWeight.bold),
-          ),
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Batal',
+              style: TextStyle(fontWeight: FontWeight.bold)),
         ),
         TextButton(
           onPressed: () async {
             if (_taskController.text.isNotEmpty) {
               final now = DateTime.now();
-
               if (selectedDate != null && selectedTime != null) {
                 DateTime scheduledDate = DateTime(
                   selectedDate!.year,
@@ -292,54 +330,38 @@ class _CustomAlertState extends State<CustomAlert> {
                 }
 
                 if (scheduledDate.isAfter(now)) {
-                  scheduleNotification(
+                  await scheduleNotification(
                     'Pengingat Tugas',
                     'Tugas: ${_taskController.text} akan segera dimulai!',
                     scheduledDate,
                   );
-                } else {
-                  print('Waktu pengingat tidak valid.');
                 }
               }
 
-              await addTask(
-                title: _taskController.text,
-                category: selectedCategory,
-                date: selectedDate ?? DateTime.now(),
-                time: selectedTime != null
-                    ? selectedTime!.format(context)
-                    : 'No Time',
-                description: _noteController.text.isNotEmpty
-                    ? _noteController.text
-                    : 'Tidak ada catatan untuk tugas ini.',
-              );
-
-              widget.onAddTask({
+              // Data tugas baru yang akan dikirimkan ke callback
+              final newTask = {
                 'title': _taskController.text,
                 'category': selectedCategory,
-                'date': selectedDate != null
-                    ? DateFormat('dd-MM-yyyy').format(selectedDate!)
-                    : 'No Date',
-                'time': selectedTime != null
-                    ? selectedTime!.format(context)
-                    : 'No Time',
-                'reminder': selectedReminder != null
-                    ? '$selectedReminder menit sebelumnya'
-                    : 'No Reminder',
-                'note': _noteController.text.isNotEmpty
-                    ? _noteController.text
-                    : 'Tidak ada catatan untuk tugas ini.',
-              });
+                'date': selectedDate?.toIso8601String() ??
+                    DateTime.now().toIso8601String(),
+                'time': selectedTime?.format(context) ?? 'No Time',
+                'reminder': selectedReminder,
+                'note': _noteController.text,
+              };
+
+              // Panggil callback onAddTask
+              await widget.onAddTask(newTask);
 
               Navigator.of(context).pop();
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Judul tugas tidak boleh kosong')),
+              );
             }
           },
           child: const Text(
             'Selesai',
-            style: TextStyle(
-                fontSize: 16,
-                color: ColorCollection.primary900,
-                fontWeight: FontWeight.bold),
+            style: TextStyle(fontWeight: FontWeight.bold),
           ),
         ),
       ],

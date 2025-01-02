@@ -5,6 +5,7 @@ import 'package:notequ/design_system/widget/card/task_card.dart';
 import 'package:notequ/pages/tugasku/custom_alert.dart';
 import 'package:notequ/pages/tugasku/detail_tugas.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:notequ/pages/tugasku/custom_alert.dart';
 
 class Tugasku extends StatefulWidget {
   final SupabaseClient client;
@@ -18,11 +19,30 @@ class Tugasku extends StatefulWidget {
 class _TugaskuState extends State<Tugasku> {
   List<Map<String, String>> tasks = [];
   List<Map<String, String>> completedTasks = [];
+  List<Map<String, dynamic>> categories = [];
+  String? selectedCategoryId;
 
   @override
   void initState() {
     super.initState();
+    _loadCategories();
     _loadTasks();
+  }
+
+  Future<void> _loadCategories() async {
+    final response = await widget.client
+        .from('categories')
+        .select()
+        .order('name', ascending: true)
+        .execute();
+
+    if (response.status == 200 && response.data != null) {
+      setState(() {
+        categories = List<Map<String, dynamic>>.from(response.data);
+      });
+    } else {
+      print('Error fetching categories: Status ${response.status}');
+    }
   }
 
   Future<void> _loadTasks() async {
@@ -36,12 +56,13 @@ class _TugaskuState extends State<Tugasku> {
   }
 
   Future<List<Map<String, String>>> fetchTasks({String? status}) async {
-    final response = await widget.client
-        .from('tasks')
-        .select()
-        .eq('status', status ?? 'pending')
-        .order('date', ascending: true)
-        .execute();
+    final query = widget.client.from('tasks').select();
+    if (selectedCategoryId != null && selectedCategoryId != '0') {
+      query.eq('category_id', selectedCategoryId);
+    }
+    query.eq('status', status ?? 'pending').order('date', ascending: true);
+
+    final response = await query.execute();
 
     if (response.status != 200 || response.data == null) {
       print('Error fetching tasks: Status ${response.status}');
@@ -52,12 +73,36 @@ class _TugaskuState extends State<Tugasku> {
       return {
         'id': task['id'].toString(),
         'title': task['title'].toString(),
-        'category': task['category'].toString(),
+        'category_id': task['category_id'].toString(),
         'date': task['date'].toString(),
         'time': task['time'].toString(),
         'description': task['description'].toString(),
       };
     }).toList();
+  }
+
+  void _showCustomAlert() {
+    showDialog(
+      context: context,
+      builder: (context) => CustomAlert(
+        categories: categories,
+        onAddTask: (task) async {
+          await widget.client.from('tasks').insert(task).execute();
+          _loadTasks();
+        },
+        onCategorySelected: (categoryId) {
+          setState(() {
+            selectedCategoryId = categoryId;
+          });
+        },
+        onAddCategory: (categoryName) async {
+          await widget.client
+              .from('categories')
+              .insert({'name': categoryName}).execute();
+          _loadCategories();
+        },
+      ),
+    );
   }
 
   @override
@@ -77,13 +122,33 @@ class _TugaskuState extends State<Tugasku> {
                 color: ColorCollection.primary900,
               ),
             ),
-            const SizedBox(
-              height: 8,
-            ),
+            const SizedBox(height: 8),
             const Text(
               'Mau buat tugas apa hari ini?',
               style: TextStyle(fontSize: 16, color: ColorCollection.neutral600),
             ),
+            const SizedBox(height: 16),
+            categories.isNotEmpty
+                ? Wrap(
+                    spacing: 8.0,
+                    children: categories.map((category) {
+                      final categoryId = category['id']?.toString() ?? '0';
+                      final categoryName =
+                          category['name']?.toString() ?? 'Unknown';
+
+                      return ChoiceChip(
+                        label: Text(categoryName),
+                        selected: selectedCategoryId == categoryId,
+                        onSelected: (isSelected) {
+                          setState(() {
+                            selectedCategoryId = isSelected ? categoryId : null;
+                          });
+                          _loadTasks();
+                        },
+                      );
+                    }).toList(),
+                  )
+                : const CircularProgressIndicator(),
             const SizedBox(height: 24),
             Expanded(
               child: DefaultTabController(
@@ -129,24 +194,24 @@ class _TugaskuState extends State<Tugasku> {
             context: context,
             builder: (context) {
               return CustomAlert(
-                onAddTask: (newTask) async {
-                  await widget.client.from('tasks').insert(newTask).execute();
-                  _loadTasks();
-                },
                 categories: [
-                  'Semua',
-                  'Tugas Kuliah',
-                  'Pribadi',
-                  'Kerja',
-                  'Hobi',
-                  'Olahraga',
+                  {'id': '1', 'name': 'Work'},
+                  {'id': '2', 'name': 'Personal'},
                 ],
+                onAddTask: (task) async {
+                  debugPrint("Task added: $task");
+                },
+                onCategorySelected: (category) {
+                  debugPrint("Category selected: $category");
+                },
+                onAddCategory: (categoryName) async {
+                  debugPrint("Category added: $categoryName");
+                },
               );
             },
           );
         },
-        backgroundColor: ColorCollection.primary900,
-        child: const Icon(Icons.add, color: ColorCollection.primary100),
+        child: const Icon(Icons.add),
       ),
     );
   }

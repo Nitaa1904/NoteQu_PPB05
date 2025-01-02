@@ -3,17 +3,15 @@ import 'package:notequ/design_system/styles/color.dart';
 import 'package:notequ/design_system/widget/card/task_card.dart';
 import 'package:notequ/pages/tugasku/detail_tugas.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:notequ/pages/tugasku/custom_alert.dart';
 
 class Kategori extends StatefulWidget {
   final List<Map<String, String>> tasks; // Daftar tugas
-  final List<String> categories; // Daftar kategori
+  final List<String> categories;
   final Function(Map<String, String>) addTask; // Fungsi untuk menambah tugas
   final Future<void> Function(Map<String, String>) updateTask;
-  // Fungsi untuk mengedit tugas
-  final Function(Map<String, String>)
-      deleteTask; // Fungsi untuk menghapus tugas
-  final Function(Map<String, String>)
-      completeTask; // Fungsi untuk menyelesaikan tugas
+  final Function(Map<String, String>) deleteTask;
+  final Function(Map<String, String>) completeTask;
 
   const Kategori({
     Key? key,
@@ -30,97 +28,96 @@ class Kategori extends StatefulWidget {
 }
 
 class _KategoriState extends State<Kategori> {
-  List<String> categories = []; // Kategori lokal
-  String selectedCategory = 'Semua'; // Kategori terpilih
+  List<Map<String, dynamic>> categories = [];
+  String selectedCategory = 'Semua';
   late Future<List<Map<String, dynamic>>> futureTasks;
 
   final SupabaseClient client = Supabase.instance.client;
 
-  Future<List<Map<String, dynamic>>> fetchCategories() async {
+  Future<void> addCategory(String name) async {
+    try {
+      await client.from('categories').insert({'name': name}).execute();
+      await fetchCategories();
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal menambahkan kategori: $error')),
+      );
+    }
+  }
+
+  Future<void> fetchCategories() async {
     final response = await client.from('categories').select().execute();
-    if (response.status != 200 || response.data == null) {
-      return List<Map<String, dynamic>>.from(response.data ?? []);
-    } else {
-      throw Exception('Failed to fetch categories: ${response.status}');
+    if (response.status == 200 && response.data != null) {
+      setState(() {
+        categories = List<Map<String, dynamic>>.from(response.data);
+      });
     }
   }
 
   Future<List<Map<String, dynamic>>> fetchTasksByCategory(
-      String category) async {
+      String? categoryId) async {
     final query = client.from('tasks').select();
-    if (category.isNotEmpty) {
-      query.eq('category', category);
+    if (categoryId != null && categoryId.isNotEmpty) {
+      query.eq('category_id', categoryId);
     }
     final response = await query.execute();
-    if (response.status != 201 || response.data == null) {
-      return List<Map<String, dynamic>>.from(response.data ?? []);
-    } else {
-      throw Exception('Failed to fetch tasks: ${response.status}');
+    if (response.status == 200 && response.data != null) {
+      return List<Map<String, dynamic>>.from(response.data);
     }
+    return [];
   }
 
-  void showAddCategoryDialog() {
-    final TextEditingController categoryController = TextEditingController();
-
+  void showAddTaskDialog() {
     showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8.0),
-          ),
-          title: const Text("Tambah Kategori Baru"),
-          content: TextField(
-            controller: categoryController,
-            decoration: const InputDecoration(
-              hintText: "Masukkan kategori baru",
-              border: OutlineInputBorder(),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Batal"),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                final newCategory = categoryController.text.trim();
-                if (newCategory.isNotEmpty &&
-                    !categories.contains(newCategory)) {
-                  setState(() {
-                    categories.add(newCategory);
-                  });
-                  Navigator.pop(context);
-                }
-              },
-              child: const Text("Simpan"),
-            ),
-          ],
-        );
-      },
+      builder: (context) => CustomAlert(
+        categories: categories,
+        onAddTask: (task) async {
+          // Tambahkan logika untuk menambah tugas di sini
+          // Contoh:
+          await widget.addTask(
+              task.map((key, value) => MapEntry(key, value.toString())));
+          setState(() {
+            futureTasks = fetchTasksByCategory(
+                selectedCategory.isEmpty ? null : selectedCategory);
+          });
+        },
+        onCategorySelected: (selectedId) {
+          setState(() {
+            selectedCategory = selectedId;
+          });
+        },
+        onAddCategory: addCategory,
+      ),
     );
   }
 
   @override
   void initState() {
     super.initState();
-    fetchCategories().then((fetchedCategories) {
-      setState(() {
-        categories = [
-          'Semua',
-          ...fetchedCategories.map((e) => e['name'] as String)
-        ];
-      });
-    });
-    futureTasks = fetchTasksByCategory(selectedCategory);
+    fetchCategories();
+    futureTasks = fetchTasksByCategory(null);
   }
 
-  void onCategorySelected(String category) {
+  void onCategorySelected(String categoryId) {
     setState(() {
-      selectedCategory = category;
-      futureTasks = fetchTasksByCategory(category == 'Semua' ? '' : category);
+      selectedCategory = categoryId;
+      futureTasks =
+          fetchTasksByCategory(categoryId.isEmpty ? null : categoryId);
     });
   }
+
+  // void onCategorySelected(String categoryId) {
+  //   setState(() {
+  //     final selected = categories.firstWhere(
+  //       (category) => category['id'] == categoryId,
+  //       orElse: () => {'name': 'Semua'},
+  //     );
+  //     selectedCategory = selected['name'] as String? ?? 'Semua';
+  //     futureTasks =
+  //         fetchTasksByCategory(categoryId.isEmpty ? null : categoryId);
+  //   });
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -146,29 +143,21 @@ class _KategoriState extends State<Kategori> {
               children: [
                 Expanded(
                   child: SizedBox(
-                    height: 32,
+                    height: 40,
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
                       itemCount: categories.length,
                       itemBuilder: (context, index) {
+                        final category = categories[index];
                         return Padding(
-                          padding: const EdgeInsets.only(right: 12.0),
-                          child: RawChip(
-                            label: Text(
-                              categories[index],
-                              style: TextStyle(
-                                color: selectedCategory == categories[index]
-                                    ? ColorCollection.primary100
-                                    : ColorCollection.primary900,
-                              ),
-                            ),
-                            showCheckmark: false,
-                            selected: selectedCategory == categories[index],
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: ChoiceChip(
+                            label: Text(category['name'] ?? 'Unknown'),
+                            selected: selectedCategory == category['id'],
                             onSelected: (isSelected) {
-                              onCategorySelected(categories[index]);
+                              onCategorySelected(
+                                  isSelected ? category['id'] : '');
                             },
-                            backgroundColor: ColorCollection.primary100,
-                            selectedColor: ColorCollection.primary900,
                           ),
                         );
                       },
@@ -178,7 +167,7 @@ class _KategoriState extends State<Kategori> {
                 IconButton(
                   icon:
                       const Icon(Icons.add, color: ColorCollection.primary900),
-                  onPressed: showAddCategoryDialog,
+                  onPressed: showAddTaskDialog,
                 ),
               ],
             ),
@@ -224,7 +213,10 @@ class _KategoriState extends State<Kategori> {
                       ),
                     );
                   }
-                  final tasks = snapshot.data!;
+                  final tasks = snapshot.data ?? [];
+                  if (tasks.isEmpty) {
+                    return const Center(child: Text('Belum ada tugas.'));
+                  }
                   return ListView.builder(
                     itemCount: tasks.length,
                     itemBuilder: (context, index) {
