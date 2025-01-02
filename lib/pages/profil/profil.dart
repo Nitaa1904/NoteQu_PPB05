@@ -18,8 +18,8 @@ class Profil extends StatefulWidget {
 }
 
 class _ProfilState extends State<Profil> {
-  String name = "Budiono Siregar";
-  String email = "budi123@gmail.com";
+  String name = "Nita Fitrotul Mar'ah";
+  String email = "nita@gmail.com";
   Map<String, dynamic>? userProfile;
 
   @override

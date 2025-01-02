@@ -28,6 +28,7 @@ class _CustomAlertState extends State<CustomAlert> {
   final TextEditingController _categoryController = TextEditingController();
   final _taskController = TextEditingController();
   final _noteController = TextEditingController();
+
   DateTime? selectedDate;
   TimeOfDay? selectedTime;
   String selectedCategory = '';
@@ -90,21 +91,29 @@ class _CustomAlertState extends State<CustomAlert> {
   }
 
   // Tambahkan tugas ke database Supabase
-  Future<void> addTask({
-    required String title,
-    required String category,
-    required DateTime date,
-    required String time,
-    required String description,
-  }) async {
+  // Future<void> addTask({
+  //   required String title,
+  //   required String category,
+  //   required DateTime date,
+  //   required String time,
+  //   required String description,
+  // }) async {
+  //   try {
+  //     await client.from('tasks').insert({
+  //       'title': title,
+  //       'category': category,
+  //       'date': date.toIso8601String(),
+  //       'time': time,
+  //       'description': description,
+  //     });
+  //   } catch (e) {
+  //     debugPrint('Error adding task: $e');
+  //   }
+  // }
+
+  Future<void> addTask(Map<String, dynamic> taskData) async {
     try {
-      await client.from('tasks').insert({
-        'title': title,
-        'category': category,
-        'date': date.toIso8601String(),
-        'time': time,
-        'description': description,
-      });
+      await client.from('tasks').insert(taskData);
     } catch (e) {
       debugPrint('Error adding task: $e');
     }
@@ -212,159 +221,280 @@ class _CustomAlertState extends State<CustomAlert> {
 
   @override
   Widget build(BuildContext context) {
-    final TextEditingController categoryController = TextEditingController();
-    String selectedCategory = '';
+    // final TextEditingController categoryController = TextEditingController();
+    // String selectedCategory = '';
 
-    return AlertDialog(
-      backgroundColor: ColorCollection.primary100,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16.0),
-      ),
-      title: const Text(
-        'Tambah Tugas Baru',
-        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-      ),
-      content: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextFormField(
-              controller: _taskController,
-              decoration: InputDecoration(
-                hintText: 'Masukkan judul tugas',
-                focusColor: ColorCollection.primary900,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Text('Pilih Kategori',
-                style: TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8.0,
+    return Dialog(
+        backgroundColor: ColorCollection.primary100,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.0),
+        ),
+        child: SingleChildScrollView(
+            child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(
-                  width: double.maxFinite,
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: widget.categories.length,
-                    itemBuilder: (context, index) {
-                      final category = widget.categories[index];
-                      return ListTile(
-                        title: Text(
-                          category['name'] ?? 'Unknown',
-                          style: TextStyle(
-                            color: ColorCollection.primary900,
-                          ),
-                        ),
-                        onTap: () {
-                          widget.onCategorySelected(category['id'] as String);
-                          Navigator.pop(context);
-                        },
-                      );
-                    },
+                const Text(
+                  'Tambah Tugas Baru',
+                  textAlign: TextAlign.left,
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                ),
+                const SizedBox(
+                  height: 16,
+                ),
+                TextFormField(
+                  controller: _taskController,
+                  decoration: InputDecoration(
+                    hintText: 'Masukkan judul tugas',
+                    focusColor: ColorCollection.primary900,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _buildDatePicker(),
-            const SizedBox(height: 16),
-            _buildTimePicker(),
-            const SizedBox(height: 16),
-            const Text('Pengingat',
-                style: TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8.0,
-              children: [5, 10, 15, 30, 60].map((minute) {
-                return ChoiceChip(
-                  label: Text('$minute menit sebelumnya'),
-                  selected: selectedReminder == minute,
-                  onSelected: (isSelected) {
-                    setState(() {
-                      selectedReminder = isSelected ? minute : null;
-                    });
-                  },
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _noteController,
-              maxLines: 3,
-              decoration: InputDecoration(
-                hintText: 'Tambahkan catatan untuk tugas ini',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
+                const SizedBox(height: 16),
+                const Text('Pilih Kategori',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                // ListView.builder(
+                //   shrinkWrap: true,
+                //   itemCount: widget.categories.length,
+                //   itemBuilder: (context, index) {
+                //     final category = widget.categories[index];
+                //     return ListTile(
+                //       title: Text(category['name']),
+                //       onTap: () =>
+                //           setState(() => selectedCategory = category['id']),
+                //     );
+                //   },
+                // ),
+                Wrap(
+                  spacing: 8.0,
+                  children: widget.categories.map((category) {
+                    return RawChip(
+                      label: Text(
+                        category['name'] ?? 'Unknown',
+                        style: TextStyle(
+                          color: selectedCategory == category['id']
+                              ? ColorCollection
+                                  .primary100 // Warna teks ketika dipilih
+                              : ColorCollection
+                                  .primary900, // Warna teks default),
+                        ),
+                      ),
+                      selected: selectedCategory == category['id'],
+                      selectedColor: ColorCollection.primary900,
+                      backgroundColor: ColorCollection.primary100,
+                      showCheckmark: false,
+                      onSelected: (isSelected) {
+                        setState(() {
+                          selectedCategory = isSelected ? category['id'] : null;
+                        });
+                      },
+                    );
+                  }).toList(),
                 ),
-              ),
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Batal',
-              style: TextStyle(fontWeight: FontWeight.bold)),
-        ),
-        TextButton(
-          onPressed: () async {
-            if (_taskController.text.isNotEmpty) {
-              final now = DateTime.now();
-              if (selectedDate != null && selectedTime != null) {
-                DateTime scheduledDate = DateTime(
-                  selectedDate!.year,
-                  selectedDate!.month,
-                  selectedDate!.day,
-                  selectedTime!.hour,
-                  selectedTime!.minute,
-                );
+                // Wrap(
+                //   spacing: 8.0,
+                //   children: [
+                //     SizedBox(
+                //       width: double.maxFinite,
+                //       child: ListView.builder(
+                //         shrinkWrap: true,
+                //         itemCount: widget.categories.length,
+                //         itemBuilder: (context, index) {
+                //           final category = widget.categories[index];
+                //           return ListTile(
+                //             title: Text(
+                //               category['name'] ?? 'Unknown',
+                //               style: TextStyle(
+                //                 color: ColorCollection.primary900,
+                //               ),
+                //             ),
+                //             onTap: () {
+                //               widget.onCategorySelected(category['id'] as String);
+                //               // Navigator.pop(context);
+                //             },
+                //           );
+                //         },
+                //       ),
+                //     ),
+                //   ],
+                // ),
+                const SizedBox(height: 16),
+                _buildDatePicker(),
+                const SizedBox(height: 16),
+                _buildTimePicker(),
+                const SizedBox(height: 16),
+                const Text('Pengingat',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8.0,
+                  runSpacing: 8.0,
+                  children: [5, 10, 15, 30, 60].map((minute) {
+                    return RawChip(
+                      label: Text(
+                        '$minute menit sebelumnya',
+                        style: TextStyle(
+                          color: selectedReminder == minute
+                              ? ColorCollection
+                                  .primary100 // Warna teks ketika dipilih
+                              : ColorCollection
+                                  .primary900, // Warna teks default),
+                        ),
+                      ),
+                      selected: selectedReminder == minute,
+                      selectedColor: ColorCollection.primary900,
+                      backgroundColor: ColorCollection.primary100,
+                      showCheckmark: false,
+                      onSelected: (isSelected) {
+                        setState(() {
+                          selectedReminder = isSelected ? minute : null;
+                        });
+                      },
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _noteController,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    hintText: 'Tambahkan catatan untuk tugas ini',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                  ),
+                ),
+                const SizedBox(
+                  height: 16,
+                ),
+                SizedBox(
+                  height: 48,
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                        foregroundColor: ColorCollection.primary100,
+                        backgroundColor: ColorCollection.primary900,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8))),
+                    onPressed: () async {
+                      if (_taskController.text.isNotEmpty &&
+                          selectedCategory != null) {
+                        final now = DateTime.now();
+                        if (selectedDate != null && selectedTime != null) {
+                          DateTime scheduledDate = DateTime(
+                            selectedDate!.year,
+                            selectedDate!.month,
+                            selectedDate!.day,
+                            selectedTime!.hour,
+                            selectedTime!.minute,
+                          );
 
-                if (selectedReminder != null) {
-                  scheduledDate = scheduledDate
-                      .subtract(Duration(minutes: selectedReminder!));
-                }
+                          if (selectedReminder != null) {
+                            scheduledDate = scheduledDate
+                                .subtract(Duration(minutes: selectedReminder!));
+                          }
 
-                if (scheduledDate.isAfter(now)) {
-                  await scheduleNotification(
-                    'Pengingat Tugas',
-                    'Tugas: ${_taskController.text} akan segera dimulai!',
-                    scheduledDate,
-                  );
-                }
-              }
+                          if (scheduledDate.isAfter(now)) {
+                            await scheduleNotification(
+                              'Pengingat Tugas',
+                              'Tugas: ${_taskController.text} akan segera dimulai!',
+                              scheduledDate,
+                            );
+                          }
+                        }
 
-              // Data tugas baru yang akan dikirimkan ke callback
-              final newTask = {
-                'title': _taskController.text,
-                'category': selectedCategory,
-                'date': selectedDate?.toIso8601String() ??
-                    DateTime.now().toIso8601String(),
-                'time': selectedTime?.format(context) ?? 'No Time',
-                'reminder': selectedReminder,
-                'note': _noteController.text,
-              };
+                        // Data tugas baru yang akan dikirimkan ke callback
+                        final newTask = {
+                          'title': _taskController.text,
+                          'category': selectedCategory,
+                          'date': selectedDate?.toIso8601String() ??
+                              DateTime.now().toIso8601String(),
+                          'time': selectedTime?.format(context) ?? 'No Time',
+                          'reminder': selectedReminder,
+                          'note': _noteController.text,
+                        };
 
-              // Panggil callback onAddTask
-              await widget.onAddTask(newTask);
+                        // Panggil callback onAddTask
+                        await widget.onAddTask(newTask);
 
-              Navigator.of(context).pop();
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Judul tugas tidak boleh kosong')),
-              );
-            }
-          },
-          child: const Text(
-            'Selesai',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-        ),
-      ],
-    );
+                        Navigator.of(context).pop();
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text('Judul tugas tidak boleh kosong')),
+                        );
+                      }
+                    },
+                    child: const Text(
+                      'Selesai',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+                const SizedBox(
+                  height: 8,
+                ),
+                SizedBox(
+                  height: 48,
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                        side: const BorderSide(
+                            color: ColorCollection.primary900, width: 1.5),
+                        foregroundColor: ColorCollection.primary900,
+                        backgroundColor: ColorCollection.primary100,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8))),
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Batal',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ]),
+          // content: SingleChildScrollView(
+          //   child: Column(
+          //     crossAxisAlignment: CrossAxisAlignment.start,
+          //     children: [
+          //       // Wrap(
+          //       //   spacing: 8.0,
+          //       //   children: [
+          //       //     SizedBox(
+          //       //       width: double.maxFinite,
+          //       //       child: ListView.builder(
+          //       //         shrinkWrap: true,
+          //       //         itemCount: widget.categories.length,
+          //       //         itemBuilder: (context, index) {
+          //       //           final category = widget.categories[index];
+          //       //           return ListTile(
+          //       //             title: Text(
+          //       //               category['name'] ?? 'Unknown',
+          //       //               style: TextStyle(
+          //       //                 color: ColorCollection.primary900,
+          //       //               ),
+          //       //             ),
+          //       //             onTap: () {
+          //       //               widget.onCategorySelected(category['id'] as String);
+          //       //               Navigator.pop(context);
+          //       //             },
+          //       //           );
+          //       //         },
+          //       //       ),
+          //       //     ),
+          //       //   ],
+          //       // ),
+
+          //     ],
+          //   ),
+          // ),
+          // actions: [
+
+          // ],
+        )));
   }
 }
