@@ -81,6 +81,30 @@ class _TugaskuState extends State<Tugasku> {
     }).toList();
   }
 
+  void _showCustomAlert() {
+    showDialog(
+      context: context,
+      builder: (context) => CustomAlert(
+        categories: categories,
+        onAddTask: (task) async {
+          await widget.client.from('tasks').insert(task).execute();
+          _loadTasks();
+        },
+        onCategorySelected: (categoryId) {
+          setState(() {
+            selectedCategoryId = categoryId;
+          });
+        },
+        onAddCategory: (categoryName) async {
+          await widget.client
+              .from('categories')
+              .insert({'name': categoryName}).execute();
+          _loadCategories();
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -164,29 +188,31 @@ class _TugaskuState extends State<Tugasku> {
           ],
         ),
       ),
-      // floatingActionButton: FloatingActionButton(
-      //   onPressed: () {
-      //     showDialog(
-      //       context: context,
-      //       builder: (context) {
-      //         return CustomAlert(
-      //           onAddTask: (newTask) async {
-      //             await widget.client.from('tasks').insert(newTask).execute();
-      //             _loadTasks();
-      //           },
-      //           categories: categories.isNotEmpty
-      //               ? categories.map((category) {
-      //                   return category['name']?.toString() ??
-      //                       'Kategori Tidak Diketahui';
-      //                 }).toList()
-      //               : [],
-      //         );
-      //       },
-      //     );
-      //   },
-      //   backgroundColor: ColorCollection.primary900,
-      //   child: const Icon(Icons.add, color: ColorCollection.primary100),
-      // ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          showDialog(
+            context: context,
+            builder: (context) {
+              return CustomAlert(
+                categories: [
+                  {'id': '1', 'name': 'Work'},
+                  {'id': '2', 'name': 'Personal'},
+                ],
+                onAddTask: (task) async {
+                  debugPrint("Task added: $task");
+                },
+                onCategorySelected: (category) {
+                  debugPrint("Category selected: $category");
+                },
+                onAddCategory: (categoryName) async {
+                  debugPrint("Category added: $categoryName");
+                },
+              );
+            },
+          );
+        },
+        child: const Icon(Icons.add),
+      ),
     );
   }
 

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:notequ/design_system/styles/color.dart';
 
 class DetailTugas extends StatefulWidget {
   final Map<String, String> task;
@@ -22,9 +21,10 @@ class DetailTugas extends StatefulWidget {
 
 class _DetailTugasState extends State<DetailTugas> {
   void _editTask() {
-    final _taskController = TextEditingController(text: widget.task['title']);
+    final _taskController =
+        TextEditingController(text: widget.task['title'] ?? '');
     final _noteController =
-        TextEditingController(text: widget.task['description']);
+        TextEditingController(text: widget.task['description'] ?? '');
     DateTime? selectedDate = widget.task['date'] != null
         ? DateFormat('yyyy-MM-dd').parse(widget.task['date']!)
         : null;
@@ -49,6 +49,7 @@ class _DetailTugasState extends State<DetailTugas> {
               content: SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min, // Pastikan ukuran minimal
                   children: [
                     TextFormField(
                       controller: _taskController,
@@ -138,7 +139,7 @@ class _DetailTugasState extends State<DetailTugas> {
                       'date': selectedDate != null
                           ? DateFormat('yyyy-MM-dd').format(selectedDate!)
                           : '',
-                      'note': _noteController.text,
+                      'description': _noteController.text,
                     };
 
                     await widget.onTaskUpdated({
@@ -174,6 +175,7 @@ class _DetailTugasState extends State<DetailTugas> {
         title: const Text('Detail Tugasku'),
       ),
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           ElevatedButton(onPressed: _editTask, child: const Text('Edit')),
           ElevatedButton(onPressed: _deleteTask, child: const Text('Hapus')),
